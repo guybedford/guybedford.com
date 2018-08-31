@@ -1,0 +1,148 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>An Introduction to jspm (video)</title>
+  <meta name="description" content="An introduction to the jspm project and how I got involved in it">
+  <meta name="viewport" content="width=device-width">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+      <div class="article">
+        <a class="back" href="/" target="_self">&laquo;</a>
+        <div class="article-header">
+          <h1 class="title">SystemJS 2.0 Alpha Release</h1>
+          <div class="meta">
+            <span class="author">Guy Bedford</span>
+            &sdot;
+            <span class="date">31 August 2018</span>
+          </div>
+          <div class="clear"></div>
+        </div>
+        <div class="article-body">
+          <p><a href="">SystemJS 2.0.0-alpha.1</a> has just been released, a significant simplification of the project building on the principle of a focused hackable core with a minimal footprint.</p>
+          <p>The project now provides two base builds:</p>
+          <ul>
+          <li><a href="https://github.com/systemjs/systemjs/blob/2.0.0-alpha.1/README.md#1-sjs-minimal-loader">s.js</a> - a 1.5KB minimal loader supporting the full semantics of System.register loading only. This is an ideal loader for <a href="https://rollupjs.org/guide/en#experimental-code-splitting">Rollup code-splitting workflows</a>.</li>
+          <li><a href="https://github.com/systemjs/systemjs/blob/2.0.0-alpha.1/README.md#2-systemjs-loader">system.js</a> - a 3KB loader supporting global script loading for third-party library support, <a href="https://github.com/systemjs/systemjs/blob/2.0.0-alpha.1/docs/package-name-maps.md">package name maps</a>, WASM and loading in Web Workers.</li>
+          </ul>
+          <p>On top of these builds, <a href="https://github.com/systemjs/systemjs/blob/2.0.0-alpha.1/README.md#extras">pluggable extras</a> can be dropped in for additional functionality including AMD support, named exports support for legacy modules and source transoform support for in-browser Babel compilation.</p>
+          <p>Both loaders support IE11+ provided a Promise polyfill is available.</p>
+          <h2 class="mume-header" id="towards-a-stable-20-release">Towards a Stable 2.0 Release</h2>
+
+          <p>As the first alpha, this is not the final API. Rather, it is an early release of this new model of an optimized production build allowing powerful extensions to get further feedback from you.</p>
+          <p>Many of the previous features of SystemJS 0.21 should be possible to implement within the extras and extensions model of SystemJS 2.0. If you are interested in a specific feature here, please share your work by listing your extensions in the README of the project. In addition we can integrate whatever extras turn out to be the most useful for the community. This final set of extras, and what can be done through loader extensibility, is up to you.</p>
+          <p><em>SystemJS 0.21 will continue to be maintained, and will be in the long-term. There is no pressing need to upgrade. The stable release of 2.0 will still be a while as all the workflows are properly tested and refined.</em></p>
+          <h2 class="mume-header" id="systemjs-20-goals">SystemJS 2.0 Goals</h2>
+
+          <p>The <a href="http://www.guybedford.com/systemjs-alignment">SystemJS 0.20 release</a> was a first-step towards better-aligning with native modules in browsers, but it still maintained the shell of the <a href="https://github.com/ModuleLoader/es-module-loader">WhatWG Module Loader</a> API.</p>
+          <p>The 2.0 SystemJS release is a full departure from this loader specification model, instead focusing on building an optimal and hackable browser loader, doubling down on the goals of:</p>
+          <ol>
+          <li>To support existing module workflows in legacy browsers through the s.js build.</li>
+          <li>To provide current implementations of the future native modules specifications in browsers today through the system.js build.</li>
+          <li>To provide a flexible hackable loader core that can be extended through core extras or community extensions.</li>
+          </ol>
+          <p>Being able to radically simplify the project will help to adapt to the workflows needed going forward.</p>
+          <h3 class="mume-header" id="modular-workflows-in-legacy-browsers-sjs-build">Modular Workflows in Legacy Browsers (s.js build)</h3>
+
+          <p>With <a href="https://rollupjs.org/guide/en#experimental-code-splitting">Rollup code-splitting</a> soon to be released as stable, we now have viable production workflows for deploying native ES modules in browsers in a way that optimizes loading with code-sharing between different entry points and dynamic imports.</p>
+          <p>The availability of native modules in browsers has continued to grow, to the point that <a href="https://caniuse.com/#feat=es6-module">75% of web users</a> are now running native-modules-compatible environments. Yet we still need to cater to that other 25%.</p>
+          <p>SystemJS provides a path to support these modern module workflows in legacy browsers, by guaranteeing that code that works in browsers supporting native modules will also work when compiled into System.register and run through SystemJS.</p>
+          <p>Having a dedicated minimal s.js build gets this overhead down to just a 1.5KB loader ensuring a fast production path.</p>
+          <h3 class="mume-header" id="implementations-of-future-native-modules-features-systemjs-build">Implementations of Future Native Modules Features (system.js build)</h3>
+
+          <p>The current new native modules specifications in progress are <a href="https://github.com/domenic/package-name-maps">Package Name Maps</a>, and <a href="https://github.com/WebAssembly/esm-integration/pull/13">support for WASM in the browser module loader</a>.</p>
+          <p>Supporting these future features in SystemJS allows you, as the project has always strived to do, to use these upcoming features in browsers today, allowing development workflows to align with what browsers will support.</p>
+          <h4 class="mume-header" id="package-name-maps">Package Name Maps</h4>
+
+          <p>Most of the features of the previous SystemJS map configuration are still supported in package maps - for example there is support for both base-level mappings as well as scoped mappings, and <code>baseURL</code> becomes the package map <code>path_prefix</code>.</p>
+          <p>Package name maps are an early spec draft and will still change before their implemention in browsers. Depending on how this process goes, these changes may be integrated during the release process towards the 2.0 stable SystemJS release, or alternatively staggered through the 3.0 release.</p>
+          <p><a href="https://github.com/systemjs/systemjs/blob/2.0.0-alpha.1/docs/package-name-maps.md">Read more about the SystemJS package maps implementation here</a>.</p>
+          <h4 class="mume-header" id="web-assembly-integration">Web Assembly Integration</h4>
+
+          <p>When loading <code>.wasm</code> files, these are now automatically passed to WebAssembly in the browser (if available), including support for imports from WASM running through the SystemJS resolver.</p>
+          <p>While Web Assembly has been previously available through a configuration option in SystemJS, enabling it by default for the <code>.wasm</code> file extension provides a much simpler integration. While this isn't quite how browsers will work (likely detecting the MIME type), servers will likely set that MIME type from the file extension anyway.</p>
+          <h3 class="mume-header" id="hackable-loader-core">Hackable Loader Core</h3>
+
+          <p>Released from the constraints of trying to follow the former loader specification, we can now expose a much simpler <a href="https://github.com/systemjs/systemjs/blob/2.0.0-alpha.1/docs/hooks.md">loader hooks mechanism</a>.</p>
+          <p>The resolver can be directly intercepted through <code>System.resolve</code>. Even things like the properties available on <code>import.meta</code> <a href="https://github.com/systemjs/systemjs/blob/2.0.0-alpha.1/docs/hooks.md#createcontexturl---object">can be customized</a>. The SystemJS extras all follow this same hooks model themselves.</p>
+          <p>Extras like the transform extra, allow an easy to use <code>System.transform</code> for still supporting those <a href="https://github.com/systemjs/systemjs-transform-babel">in-browser Babel workflows</a>.</p>
+          <h2 class="mume-header" id="deprecations">Deprecations</h2>
+
+          <p>For this early implementation, the current (in-progress) deprecation list is included below:</p>
+          <ul>
+          <li><strong><code>System.config</code></strong>: There is currently no configuration mechanism apart from package maps. Depending on the needs of extensions, we could provide a base-level configuration extension. All configuration options are currently deprecated - <code>map</code>, <code>packages</code>, <code>baseURL</code>, <code>paths</code> (replaced by package name maps), <code>depCache</code> (replaced by build techniques that inline deep dependencies, as Rollup does), <code>bundles</code> (replaced by the fact that named System.register is no longer supported). <code>format</code> detection between System.register, globals and AMD is handled automatically. Rather, we can add back configuration paths for what we need based on workflow feedback.</li>
+          <li><strong><code>SystemJS</code> global</strong>: We originally used the <code>SystemJS</code> global to avoid conflict with <code>global.System</code> due to some JS specs using the <code>System</code> global name. Since there are currently no active specifications using the <code>System</code> global, SystemJS can continue to use this global.</li>
+          <li><strong><code>System.registry</code></strong>: To align with changes to the loader spec, the registry was moved to <code>System.registry</code>. Since there is currently no active registry specification, the registry API has been simplified to just <code>System.get</code> and <code>System.delete</code> (in the system.js build only). This provides enough functionality for most use cases like hot-reloading.</li>
+          <li><strong>Named <code>System.register</code></strong>: Originally System.register followed the AMD build model of named defines in builds where multiple modules get joined into a single file under aliased names. This model has proven outdated in the face of deeper build analyis like that done by Rollup. <code>System.register('name', ...)</code> is no longer supported as Rollup output will join modules together without any wrappers, while also supporting deeper code optimizations, relying on the fact that ES modules have a composibility property down to scope transformations, while retaining exact semantics. This shift was what I previously discussed in my <a href="https://www.youtube.com/watch?v=8AvKRFhwOkk">2016 DotJS talk</a> on the topic, before becoming a core contributor to Rollup in order to work on this code splitting feature.</li>
+          <li><strong>CommonJS loading</strong>: There is currently no CommonJS loader, as the base-level Systrem.register loader, with global script support in system.js and the AMD extra provides most external loading use cases. If you do have a specific need for a CommonJS loader, splitting out the previous implementation into a third-party extension could certainly be useful.</li>
+          <li><strong>Global Snapshots</strong>: When loading global scripts, the loader no longer supports multiple global detection, or global detection when two libraries use the same global name as it now uses a more optimized <code>Object.keys(Window)</code> diff instead of a full value diff iterating the entire global object.</li>
+          </ul>
+          <p>If you disagree with any of these directions, please do share your thoughts or implementation work - nothing here is set in stone at this point. Many of these features could still be integrated as extras or extensions.</p>
+          <h2 class="mume-header" id="roadmap">Roadmap</h2>
+
+          <p>The priority now is to gather implementation feedback for refining the workflows and features, padding out needed features and extras based on this feedback and demand before the stable 2.0 release.</p>
+          <p>Once 2.0 has released as stable, going forward, s.js will continue to remain a minimal optimal loader, while system.js will continue to track the latest module specification progress, using the extras model for early experimental work, moving this work into core builds on major release milestones.</p>
+          <p>All other features can be supported through core extras or ecosystem extensions, and the hope is to better showcase community projects here.</p>
+          <p>Eventually though, once browser support for modules is strong enough, the optimized s.js loader should no longer be necessary. New techniques, like <a href="https://github.com/guybedford/packagemap-polyfill">polyfilling package maps on native modules</a>, or similarly for whatever new module workflows we have in future, will take its place.</p>
+          <p>SystemJS still aims to facilitate loading any modular package dynamically in the browser. The new <a href="https://jspm.io/">jspm.io</a> CDN supports loading any package from npm. Using the s.js build, <code>System.import('//system-dev.jspm.io/[pkgName]')</code> will load any package on-demand with Browserify-style compatibility. In the short time since it has been released this CDN is already serving 2 million users per month. Tentative work is still in progress on a jspm 2.0 to bring these same workflows available locally so that such CDN workflows can remain complementary and in alignment with a wider overall development workflow.</p>
+          <h2 class="mume-header" id="thank-you">Thank You</h2>
+
+          <p>A huge thank you to <a href="https://canopytax.github.io/post/systemjs-sponsorship/?utm_source=systemjs">Canopy Tax</a> for their sponsorship of the project.</p>
+          <p>In addition thank you to all companies that have previously sponsored the project, including <a href="http://one.com/">One.com</a>. It is thanks to the forward-thinking teams like these that the project has been able to keep going at all.</p>
+          <p>It has been a big change for the project dealing with the difference in modules specifications from where modules were heading to where they are now heading. Maintenance has definitely suffered in the process, and my apologies for this, but I am only one person with limited time for the project. Over the past years I have spent countless hours resolving over 1500 project issues single-handedly, and have fallen behind on this recently. I will do my best to continue maintaining both branches, and any help at all is very welcome.</p>
+          <p>Thanks again to you all for your continued support.</p>
+        </div>
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+          var disqus_shortname = 'guybedford';
+          (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+        </script>
+      </div>
+
+    <div class="push"></div>
+  </div>
+  <div class="footer">
+    <div class="blocks"><div class="align">
+      <div class="block"><div class="content">
+        <h2>About</h2>
+        <p>I'm a software engineer and open source contributor, currently working on <a href="http://jspm.io/">jspm.io</a> and <a href="https://github.com/systemjs/systemjs">SystemJS</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Work</h2>
+        <p>I'm available for consulting work. Support or sponsorships of my projects is always welcome, feel free to get in touch.
+      </div></div><div class="block"><div class="content">
+        <h2>Contact</h2>
+        <p>Contact me via email (@gmail.com), on <a href="https://twitter.com/guybedford">Twitter</a>, <a href="https://github.com/guybedford">GitHub</a> or <a href="http://za.linkedin.com/in/guybedford">LinkedIn</a>.
+    </div></div>
+  </div>
+  <script>
+    Array.prototype.forEach.call(document.querySelectorAll('code.javascript, code.lang-javascript, code.html, code.lang-html'), function(code) {
+      code.innerHTML = code.innerHTML
+        .replace(/\/\/(.*)/gm, '<span class="comment">//$1</span>')
+        .replace(/('[^']*')/gm, '<span class="string">$1</span>')
+        .replace(/([^#\d])(\d+)/gm, '$1<span class="number">$2</span>')
+        .replace(/([^\.])(for|function|new|throw|return|var|if|else|true|false|this|import|export class|export|from)\b/gm, '$1<span class="keyword">$2</span>');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('a'), function(a) {
+      if ((a.getAttribute('href') || '#').substr(0, 1) != '#' && !a.getAttribute('target'))
+        a.setAttribute('target', '_blank');
+    });
+  </script>
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-16744385-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+</body>
+</html>
