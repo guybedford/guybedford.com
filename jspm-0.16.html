@@ -1,0 +1,232 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>jspm 0.16 released</title>
+  <meta name="description" content="Release post on the recent upgrades in jspm and SystemJS">
+  <meta name="viewport" content="width=device-width">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+      <div class="article">
+        <a class="back" href="/" target="_self">&laquo;</a>
+        <div class="article-header">
+          <h1 class="title">jspm 0.16 released</h1>
+          <div class="meta">
+            <span class="author">Guy Bedford</span>
+            &sdot;
+            <span class="date">18 August 2015</span>
+          </div>
+          <div class="clear"></div>
+        </div>
+        <div class="article-body">
+<p>The jspm 0.16 release is finally out of beta, so I thought it would be worth summarizing some of the architectural shifts
+that have been happening in jspm and SystemJS and their motivations.</p>
+
+<p>The primary development focus for these projects is towards architectural stability, and that means ensuring that we're on a trajectory
+to align with the loader specification work as smoothly as possible in future.</p>
+
+<p>Upgrading to a maturing SystemJS API foundation is the most important part of that,
+by going through a minimal number of breaking API changes. This is one of those changes. The next one will
+likely be when we upgrade to the WhatWG loader specification when that is <a href="https://github.com/ModuleLoader/es6-module-loader/issues/381">ready</a>,
+which still looks like it is a number of months away.</p>
+
+<a name="systemjs-upgrade"></a>
+<h2><a href="#systemjs-upgrade">#</a>SystemJS Upgrade</h2>
+
+<p>The 0.17 and 0.18 (a correction) releases introduced a number of API changes including a bunch of breaking changes
+and features together, while retaining as much backwards-compatibility as possible.</p>
+
+<p>Already released over two months ago, this is an important upgrade and makes the project mostly feature-complete at this point. </p>
+
+<p>The main forces behind these API changes were from the following arguments made at the spec level:</p>
+
+<ul>
+<li>It was argued that URLs should be supported as module names since having a different naming system
+  for modules that was incompatible with URLs was deemed inappropriate for the web loader standard.
+  Up until now, importing a URL inside a module has not been supported at all in SystemJS,
+  so a normalization rewrite was necessary to make this possible.</li>
+<li>Having module names as URLs then means allowing including the <em>.js</em> file extension when requiring a module.
+  That is, we should be able to write <code>import './module.js'</code>. Automatic extension adding can still be possible
+  with custom implementations, but the default browser loader spec will likely not provide this.</li>
+<li>The in-progress WhatWG loader spec doesn't currently include a <em>locate</em> hook.
+  This SystemJS release makes the first steps towards deprecating the locate hook entirely.
+  There is still some debate over whether this hook should be included, as it would enable custom abstract names
+  as the keys in the loader registry instead of URLs. The problems then become issues of interop between
+  custom naming systems and URLs in determining unique module keys. For more information on this, <a href="https://github.com/whatwg/loader/issues/52">read the discussion at the spec issue</a>.
+</ul>
+
+<p>The route that SystemJS has taken in adapting to these changes is roughly in line with how the browser loader spec will likely handle this:</p>
+
+<ul>
+<li>Every module corresponds to a fully-normalized absolute URL in the module registry.
+<li>Module specifiers are split into two classes - URL-like names (relative or absolute - <em>./module.js</em>, <em>/module.js</em> or <em>http://module.com/module.js</em>),
+  and plain names (<em>jquery</em>, <em>babel-helpers/helpers/extends.js</em>).
+<li>When normalizing module specifiers, URL-like names are normalized to the parent URL with standard URL normalization, while
+  plain names go through the loader <em>map</em>, <em>paths</em> and <em>baseURL</em> rules.
+</ul>
+
+<p>The above works out because we can take advantage of the fact that <em>./rel</em> and <em>rel</em> are equivalent relative specifiers in URLs, so that
+the module system can provide its custom behaviours for the plain name <em>rel</em>, while retaining full URL-style normalization compatibility as a subset with <em>./rel</em>.</p>
+
+<a name="breaking-changes"></a>
+<h3><a href="#breaking-changes">#</a>Breaking Changes</h3>
+
+<p>The following breaking changes in SystemJS are then a direct result of the above:</p>
+
+<ul>
+<li>Automatic <em>.js</em> extensions are now provided by a compatibility mode, <code>System.defaultJSExtensions = true</code>, which defaults to <em>false</em>.
+<li>Setting <em>.js</em> extensions via paths rules like <code>paths['*'] = '*.js'</code> is no longer supported as it won't apply to relative module specifiers.
+<li>All configuration must be provided via <code>System.config({ map: { a: 'b' } })</code> instead of <code>System.map['a'] = 'b'</code> because we now
+  normalize configurations into URL-space within the <code>System.config</code> call.
+<li>Since we normalize configurations the baseURL needs to be provided along with the first <code>System.config({...})</code> call.
+<li><code>System.import('./x')</code> now imports URL-relative to the current page / environment baseURI.
+</ul>
+
+<a name="features"></a>
+<h3><a href="#features">#</a>Features</h3>
+
+<p>Along with this break, there was the opportunity to also include a number of long-awaited API changes.</p>
+
+<p>These provide some more flexible and powerful configuration options with greater config modularity through <a href="https://github.com/systemjs/systemjs/blob/0.18.10/docs/config-api.md#packages">package configuration</a>
+, to demonstrate by example what is possible:</p>
+
+<pre><code class="lang-javascript">
+System.config({
+  baseURL: '/lib',
+
+  map: {
+    jquery: '//code.jquery.com/jquery-2.1.4.min.js',
+  },
+
+  packages: {
+    // System.import("app") -> /lib/app/index.ts
+    'app': {
+      main: 'index.ts',
+      // overrides the defaultJSExtensions compatibility mode
+      defaultExtension: 'ts',
+      meta: {
+        '*.ts': {
+          // run all ts files through a typescript plugin
+          loader: 'typescript'
+        },
+      },
+      map: {
+        // at /lib/plugins/typescript-plugin.js
+        typescript: 'plugins/typescript-plugin.js'
+      }
+    },
+
+    // System.import("bootstrap") -> /lib/bootstrap/js/bootstrap.js
+    'bootstrap': {
+      main: 'js/bootstrap.js',
+      format: 'global'
+      meta: {
+        'js/bootstrap.js': {
+          deps: ['jquery'],
+          exports: '$'
+        }
+      }
+    }
+  }
+});
+</code></pre>
+
+<p>The above configuration allows a package at <code>System.import('app')</code> to load the main entry point <em>/lib/app/index.js</em> and to load and transpile that module and its dependencies with a TypeScript plugin (for example). We can also import other modules within the package via <code>System.import('app/feature.ts')</code>. Then the package at <code>System.import('bootstrap')</code> will load Bootstrap, returning the jQuery instance and ensuring jQuery is loaded from CDN first.</p>
+
+<blockquote>It is now advisable to use the module extension when importing any module that is not a package.
+  For example <code>import 'bootstrap/js/bootstrap.js'</code> or <code>import './dep.js'</code> should include the extension as we are referencing a module.
+  On the other hand <code>import 'bootstrap'</code> doesn't need to because we are importing the main package by name,
+  which will be turned into <em>bootstrap/js/bootstrap.js</em> by the main entry point package configuration option.</blockquote>
+
+<p>The full list of changes can be found at the <a href="https://github.com/systemjs/systemjs/releases/tag/0.17.0">detailed release notes</a>.<br />
+See also the <a href="https://github.com/systemjs/systemjs/blob/0.18.10/docs/config-api.md">SystemJS API docs</a>.</p>
+
+<a name="jspm-upgrade"></a>
+<h2><a href="#jspm-upgrade">#</a>jspm Upgrade</h2>
+
+<p><strong>If you haven't already been using the beta release, upgrading to jspm 0.16 involves just running <code>jspm init</code> to upgrade the configuration file to the new SystemJS config.</strong></p>
+
+<blockquote>In addition if running a custom build of jspm with SystemJS builder via <code>require('systemjs-builder')</code>, it is advisable to update this to
+  use <code>require('jspm').Builder</code> which will ensure the baseURL is set correctly for building. See the <a href="https://github.com/jspm/jspm-cli/blob/0.16.0/docs/api.md#class-builder">jspm build api docs</a> for more info.</blockquote>
+
+<p>The full list of new features can be found at the <a href="https://github.com/jspm/jspm-cli/releases/tag/0.16.0">0.16 release notes</a>.
+
+<p>The jspm upgrade path to this new SystemJS 0.18 is a two-step process:</p>
+
+<ol>
+  <li>The current jspm 0.16 comes with the upgrades to SystemJS 0.18 and SystemJS Builder 0.13 with the <em>defaultJSExtensions</em> compatibility mode enabled.
+  <li>jspm 0.17 coming next will then include the changes necessary to disable the <em>defaultJSExtensions</em> compatibility mode,
+  along with taking full advantage of the new SystemJS API features.
+</ol>
+
+<a name="jspm-0.17-roadmap"></a>
+<h2><a href="#jspm-0.17-roadmap">#</a>jspm 0.17 Roadmap</h2>
+
+<p>While jspm 0.17 is some way away, there are going to be some exciting changes coming:</p>
+
+<ul>
+<li>The jspm package.json configuration will be designed to exactly mirror the <a href="https://github.com/systemjs/systemjs/blob/0.18.10/docs/config-api.md#packages">SystemJS packages configuration</a>.
+  This will allow fully-modular sharing of SystemJS config including transpilation options, to install and build third-party packages from their original sources (optionally when this is beneficial).
+<li>jspm will no longer do any rewriting of package files on download, and will use SystemJS configuration instead to handle converting npm packages. This will then enable buildless linking workflows just using symlinks.
+<li>Unfortunately the above changes form a breaking change against the jspm CDN.
+  So the corresponding CDN upgrade will be moving to a new home - <a href="http://www.jsdelivr.com/about.php">jsDelivr</a> have kindly offered their CDN for jspm use.
+  This will provide much-needed speed, latency and reliability improvements for this service. This CDN upgrade is also one of the reasons why the jspm 0.17 release will take some time to land.
+</ul>
+
+<p>Thanks everyone for all your support of the project to date.</p>
+        </div>
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+          var disqus_shortname = 'guybedford';
+          (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+        </script>
+      </div>
+
+    <div class="push"></div>
+  </div>
+  <div class="footer">
+    <div class="blocks"><div class="align">
+      <div class="block"><div class="content">
+        <h2>About</h2>
+        <p>I'm a software engineer and open source contributor, currently working on <a href="http://jspm.io/">jspm.io</a> and <a href="https://github.com/systemjs/systemjs">SystemJS</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Work</h2>
+        <p>I'm available for consulting work. Project support is welcome. My Bitcoin address is <a href="bitcoin:1DTWgHqLzZJhkqFkR1aqwCQiAMYeR9GV2W">1DTWgHqLzZJhkqFkR1aqwCQiAMYeR9GV2W</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Contact</h2>
+        <p>Contact me via email (@gmail.com), the <a href="https://gitter.im/jspm/jspm">jspm gitter room</a>,
+        on <a href="https://twitter.com/guybedford">Twitter</a>, <a href="https://github.com/guybedford">GitHub</a> or <a href="http://za.linkedin.com/in/guybedford">LinkedIn</a>.
+    </div></div>
+  </div>
+  <script>
+    Array.prototype.forEach.call(document.querySelectorAll('code.javascript, code.lang-javascript, code.html, code.lang-html'), function(code) {
+      code.innerHTML = code.innerHTML
+        .replace(/\/\/(.*)/gm, '<span class="comment">//$1</span>')
+        .replace(/('[^']*')/gm, '<span class="string">$1</span>')
+        .replace(/([^#\d])(\d+)/gm, '$1<span class="number">$2</span>')
+        .replace(/([^\.])(for|function|new|throw|return|var|if|else|true|false|this|import|export class|export|from)\b/gm, '$1<span class="keyword">$2</span>');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('a'), function(a) {
+      if ((a.getAttribute('href') || '#').substr(0, 1) != '#' && !a.getAttribute('target'))
+        a.setAttribute('target', '_blank');
+    });
+  </script>
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-16744385-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+</body>
+</html>

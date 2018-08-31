@@ -1,0 +1,225 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>SystemJS 0.20 - Aligning with browser modules</title>
+  <meta name="description" content="SystemJS 0.20 - Aligning with browser modules">
+  <meta name="viewport" content="width=device-width">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+      <div class="article">
+        <a class="back" href="/" target="_self">&laquo;</a>
+        <div class="article-header">
+          <h1 class="title">SystemJS 0.20 - Aligning with browser modules</h1>
+          <div class="meta">
+            <span class="author">Guy Bedford</span>
+            &sdot;
+            <span class="date">24 January 2017</span>
+          </div>
+          <div class="clear"></div>
+        </div>
+        <div class="article-body">
+<p>SystemJS 0.20 has <a href="https://github.com/systemjs/systemjs/releases/tag/0.20.0">just been released</a>, a full rewrite and
+specification correction to the project, while ES modules are <a href="https://webkit.org/blog/7265/release-notes-for-safari-technology-preview-21/">finally here</a>, <a href="https://blogs.windows.com/msedgedev/2016/05/17/es6-modules-and-beyond/">in browsers</a>.
+
+<p>SystemJS was originally developed back in 2013 for jspm, at a time when RequireJS was the
+predominant module loader. ES6 was coming together at a rapid pace, and ES6 modules still seemed an intangible dream.
+The idea was simple and compelling - modules were coming to the browser, so we should be able to load any module at
+any time from the browser making for a very easy development workflow.
+
+<p>In the face of ES modules, it had become clear that RequireJS wasn't going to stand the test of time.
+By building a loader on top of the early ES module loader specs, it would be possible to help provide tangible
+spec feedback on modules while also gaining the benefit of a stable loader to work with.
+
+<p>Almost 4 years later and the project is seeing just under half a million downloads on npm each month.
+
+<p>It was always a given that following an unstable specification would mean breaking changes for SystemJS, but
+the goal of the project has been to track these changes. Since specifications in general move slowly,
+the assumption was that major breaks would actually be less frequent than most other projects.
+
+<p>That has mostly that has been the case, with SystemJS 0.20 representing one such spec adjustment release.
+
+<p>This post summarises some of the specification changes that have happened,
+what we might expect from future browser modules specifications, and where SystemJS sits in all of that.
+
+<a name="specification-alignment"></a>
+<h2><a href="#specification-alignment">#</a>Specification Alignment</h2>
+
+<p>The path is finally clear
+for <code>&lt;script type="module"></code> and dynamic <code>import()</code> syntax,
+thanks to the hard work of specification authors.
+
+<p>SystemJS has always presented itself as following the WhatWG loader specification, which
+has actually been on hold for some time. What we've seen with the <code>&lt;script type="module"></code>
+and dynamic <code>import()</code> module specs is the fruits of what was originally this WhatWG loader work
+but coming into form through smaller phased specifications.
+These features have always <a href="https://github.com/whatwg/loader/blob/master/roadmap.md">been on the WhatWG loader roadmap</a>,
+and represent the gradual specification of loader features - a train model like the ES7+ specifications, over the
+monolithic ES6 specification model.
+
+<p>The individual specs that we've seen so far include:
+
+<ul>
+<li> <strong>Module Scripts</strong>: Specified in WhatWG HTML spec, implemented in Safari Preview and Edge Insider.
+<li> <strong>Module Workers</strong>: Specified in WhatWG HTML spec, being implemented currently.
+<li> <strong>Dynamic Import Syntax</strong>: Stage 3 TC39 specification, being implemented currently.
+</ul>
+
+<p>Other features from the WhatWG loader spec or
+discussed as part of it that have not yet been specified but that could be in future include:
+
+<ul>
+<li><strong>Import metadata</strong>: The ability to get the current module path like <code>__filename</code> in NodeJS.
+<li><strong>Resolver hooks</strong>: The ability to hook into the browser resolver.
+  Currently <code>import 'lodash'</code> will fail for script modules according to the <a href="https://html.spec.whatwg.org/multipage/webappapis.html#integration-with-the-javascript-module-system">WhatWG Module Script resolution</a>. A resolve hook
+  can allow the ability to tell the browser <code>resolve('lodash') -> 'https://cdn.com/lodash/4.17.4/lodash.js'</code>.
+  One huge benefit of this is caching - the local <code>app.js</code> importing lodash can be cached, regardless of updates to lodash.
+<li><strong>Registry API</strong>: Exposes the ability to inspect and modify the registry map of URLs to module namespaces.
+  Allows dynamically creating module namespaces setting them into the registry. The registry API can also
+  enable hot reloading workflows if dependency metadata is exposed.
+<li><strong>Instantiate hook</strong>: This is a hook that makes it possible to hook into the loading process itself
+  and set what module should be returned for a given URL. It also enables legacy module support in the loader -
+  the ability to load AMD or CommonJS modules.
+</ul>
+
+<p>What is missing from the above features is the loader hooks - "normalize, locate, fetch, translate, instantiate".
+It has become clear that this original canon won't be specified or implemented anymore.
+
+<p>SystemJS followed this path very closely, so removing these represents one of the breaks of the project - it is no
+longer possible to hook into <code>System.fetch</code> or <code>System.translate</code>. Rather <code>System[System.constructor.resolve]</code> and
+<code>System.instantiate[System.constructor.instantiate]</code> have become the new only two hooks.
+
+<p><em>In short, SystemJS 0.20 is built to the simplified assumptions of a resolver hook and registry API in browsers,
+based on the specifications and proposals of the above listed future features.</em>
+
+<p>For exact details of these APIs see the module loader project at <a href="https://github.com/ModuleLoader/es-module-loader">https://github.com/ModuleLoader/es-module-loader</a>,
+which closely details all these specification decisions and tradeoffs.
+
+<a name="node-modules-compatibility"></a>
+<h2><a href="node-modules-compatibility">#</a>NodeJS Modules Compatibility</h2>
+
+<p>NodeJS side has made significant progress in working out its adoption path for modules.
+The SystemJS module format interop is largely aligned with these directions, but there is one adjustment
+here which forms one of the bigger breaking changes of the release.
+
+<p>This change is that named exports will no longer be permitted when importing a CommonJS module from an ES module, and
+is discussed at <a href="https://github.com/nodejs/CTC/pull/60/files#diff-2b572743d67d8a47685ae4bcb9bec651R217">https://github.com/nodejs/CTC/pull/60/files#diff-2b572743d67d8a47685ae4bcb9bec651R217</a>.
+
+<p>That is, <code>import { name } from 'cjs.js'</code>, where <code>cjs.js</code> is a CommonJS module will no longer be supported, and
+instead will require <code>import cjs from 'cjs.js'; cjs.name</code>. This will be a tough break affecting NodeJS and Babel users
+in many places, so SystemJS 0.20 is taking that hit as of right now.
+
+<p>We will continue to support the <code>__esModule</code> flag in interop though, allowing lifting of named exports for these cases.
+
+<p>So if the <code>cjs.js</code> module was written:
+
+<pre><code class="lang-javascript">exports.__esModule = true;
+
+exports.name = function () {  ... }
+</code></pre>
+
+<p>then it <em>would</em> be possible to have <code>import { name } from 'cjs.js';</code>, even though <code>cjs.js</code> is a CommonJS module,
+although this <code>__esModule</code> will eventually in the longer term be deprecated as well.
+
+<a name="production-build"></a>
+<h2><a href="#production-build">#</a>Production Build</h2>
+
+<p>Taking the reduction of the project a step further, a new production build of SystemJS has been designed
+for optimal loading and performance in production.
+
+<p>The development loader has to deal with the problem that when loading an unknown module there is a configuration problem -
+how do you get the configuration for a package you have not yet loaded? And so SystemJS
+got a full-featured package configuration system, including being able to dynamically load package configuration files
+in the browser as part of its resolution just like package.json files are loaded when in NodeJS.
+
+<p><em>Removing all these development conveniences reduces the production build down to just 5KB.</em>
+This provides loading for System.register and System.registerDynamic modules, with just baseURL, paths, map, contextual map, bundles and depCache support.
+
+<a name="isomorphic-browser-modules"></a>
+<h2><a href="#isomorphic-browser-modules">#</a>Isomorphic Browser Modules - a polyfill-like workflow</h2>
+
+<p>SystemJS aims to enable polyfill workflows for modules as they become supported in browsers, while also
+  continuing to provide the core features of map, contextual map and depCache support.
+
+<p>For example, you may want to provide ES modules to browsers with ES module support, while reverting to a SystemJS
+   production loader workflow in older browsers.
+
+<p>I refer to this approach as <em>isomorphic browser modules</em> because by using System.register as a module format,
+  the polyfill version can maintain exact execution semantics as ES module loading in supported browsers.
+
+<p>A demo workflow here based on the SystemJS 0.20 production build has been put together at <a href="https://github.com/guybedford/isomorphic-browser-modules">https://github.com/guybedford/isomorphic-browser-modules</a>
+  demonstrating this mechanism of loading ES modules in the Safari Technology Preview and falling back to SystemJS when native modules are not supported.
+
+<a name="improving-modular-workflows"></a>
+<h2><a href="#improving-modular-workflows">#</a>Improving modular workflows</h2>
+
+<p>As SystemJS continues down this path of optimizing production loading and aligning with modules in browsers, the workflows around native modules
+   will hopefully also continue to develop. One of the weak points of SystemJS at the moment is the lack of tooling around the
+   project from the development server to production optimization.
+
+<p>There's a lot of interesting work to still be done in this area, and always space for new ideas and contributions to the tooling ecosystem as well.
+
+<p>For some updated thoughts on modular production tooling,
+  <a href="http://www.thedotpost.com/2016/12/guy-bedford-unbundling-the-future-web-runtime">see my latest
+  conference talk from DotJS</a> where I discuss build optimization techniques for browsers supporting ES modules.
+
+<p>Thanks to everyone who has supported and contributed to SystemJS. If you would like to contribute in any way,
+  there is always space for contributors, and <a href="https://supporterhq.com/support/user/33df4abbec4d39260f49015d2457eafe">donations are also welcome</a>.
+<br /><br /><br />
+<div style="text-align: center;"><iframe width="400" height="225" src="https://www.youtube.com/embed/8AvKRFhwOkk" frameborder="0" allowfullscreen></iframe></div>
+        </div>
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+          var disqus_shortname = 'guybedford';
+          (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+        </script>
+      </div>
+
+    <div class="push"></div>
+  </div>
+  <div class="footer">
+    <div class="blocks"><div class="align">
+      <div class="block"><div class="content">
+        <h2>About</h2>
+        <p>I'm a software engineer and open source contributor, currently working on <a href="http://jspm.io/">jspm.io</a> and <a href="https://github.com/systemjs/systemjs">SystemJS</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Work</h2>
+        <p>I'm available for consulting work. Project support is welcome. My Bitcoin address is <a href="bitcoin:1DTWgHqLzZJhkqFkR1aqwCQiAMYeR9GV2W">1DTWgHqLzZJhkqFkR1aqwCQiAMYeR9GV2W</a>
+      </div></div><div class="block"><div class="content">
+        <h2>Contact</h2>
+        <p>Contact me via email (@gmail.com), the <a href="https://gitter.im/jspm/jspm">jspm gitter room</a>,
+        on <a href="https://twitter.com/guybedford">Twitter</a>, <a href="https://github.com/guybedford">GitHub</a> or <a href="http://za.linkedin.com/in/guybedford">LinkedIn</a>.
+    </div></div>
+  </div>
+  <script>
+    Array.prototype.forEach.call(document.querySelectorAll('code.javascript, code.lang-javascript, code.html, code.lang-html'), function(code) {
+      code.innerHTML = code.innerHTML
+        .replace(/\/\/(.*)/gm, '<span class="comment">//$1</span>')
+        .replace(/('[^']*')/gm, '<span class="string">$1</span>')
+        .replace(/([^#\d])(\d+)/gm, '$1<span class="number">$2</span>')
+        .replace(/([^\.])(for|function|new|throw|return|var|if|else|true|false|this|import|export class|export|from)\b/gm, '$1<span class="keyword">$2</span>');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('a'), function(a) {
+      if ((a.getAttribute('href') || '#').substr(0, 1) != '#' && !a.getAttribute('target'))
+        a.setAttribute('target', '_blank');
+    });
+  </script>
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-16744385-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+</body>
+</html>

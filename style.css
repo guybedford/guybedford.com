@@ -1,0 +1,258 @@
+@import url(http://fonts.googleapis.com/css?family=Gentium+Basic);
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+html {
+  height: 100%;
+}
+body {
+  padding: 0;
+  background-color: #fff; 
+  font-family: 'Gentium Basic', serif;
+  color: #113;
+  height: 100%;
+}
+strong {
+  color: #000;
+  font-size: 1em;
+}
+.container {
+  width: 40em;
+  margin-left: auto;
+  margin-right: auto;
+  
+  min-height: 100%;
+  height: auto !important;
+  height: 100%;
+  margin: 0 auto -200px;
+}
+.back {
+  font-size: 3.5em;
+  text-align: center;
+  line-height: 1em;
+  width: 1em;
+  height: 1em;
+  color: #ADADAD;
+  position: absolute;
+  left: -1.5em;
+  top: 1.5em;
+  cursor: pointer;
+  text-decoration: none;
+}
+a {
+  -moz-transition: all 0.2s ease-in;
+  -webkit-transition: all 0.2s ease-in;
+  -o-transition: all 0.2s ease-in;
+  transition: all 0.2s ease-in;
+  color: #1070CF;
+}
+a:hover {
+  color: #333;
+}
+.back:hover {
+  color: #222;
+}
+p, li, blockquote {
+  font-size: 1.1em;
+  margin: 1.5em 0;
+  line-height: 1.6em;
+}
+blockquote {
+  margin-left: 2em;
+  padding: 1em;
+  border-left: 2px solid #ddd;
+  background-color: #fafafa;
+  color: #444;
+}
+li {
+  margin: 1em 0;
+}
+ul, ol {
+  margin: 1.5em;
+}
+h1 {
+  font-size: 3.5em;
+  padding: 1.5em 0 0.5em 0;
+  text-align: left;
+}
+h1.hometitle {
+  padding-bottom: 1em;
+}
+h2.hometitle {
+  padding-bottom: 0.5em;
+  padding-top: 2em;
+}
+h2:hover a, h3:hover a {
+  color: #777;
+}
+h2 a, h3 a {
+  text-decoration: none;
+  color: #fff;
+  position: absolute;
+  left: -0.8em;
+  margin-top: 0.05em;
+}
+.article {
+  position: relative;
+  text-align: left;
+}
+.article-header {
+  padding-bottom: 3em;
+}
+.article-header .meta {
+  font-size: 0.8em;
+  color: #888;
+  text-align: right;
+}
+.article-header .meta .author {
+  color: #888;
+  text-decoration: none;
+}
+.article-header .clear {
+  clear: both;
+}
+.article-body {
+  padding-bottom: 2em;
+}
+.article-body h1, .article-body h2, .article-body h3 {
+  margin: 3em 0 1em 0;
+}
+.listing {
+  text-decoration: none;
+  color: #333;
+  display: block;
+  padding: 1em;
+  border-radius: 5px;
+  margin-bottom: 1em;
+}
+.listing h2 {
+  margin-bottom: -1em;
+}
+.listing p {
+  margin: 0;
+  font-size: 1em;
+}
+.listing .date {
+  text-align: right;
+  width: 100%;
+  display: block;
+  font-style: italic;
+  font-size: 0.8em;
+  margin-bottom: 0.8em;
+}
+.listing:hover {
+  background-color: #fafafa;
+}
+pre {
+  line-height: 1.4em;
+  font-size: 1em;
+  background-color: #fafafa;
+  border-radius: 5px;
+  border: 1px solid #e0e0e0;
+  color: #444;
+  overflow-x: scroll;
+  padding: 20px;
+}
+code {
+  background-color: #fafafa;
+  border-radius: 5px;
+  padding: 0.2em;
+  color: #333;
+}
+code .comment, code .comment .keyword {
+  color: #494;
+  font-weight: 100;
+}
+code .string, code .string .comment {
+  color: #BE1717;
+}
+code .keyword {
+  font-weight: bold;
+  color: #767;
+}
+
+.push {
+  height: 250px;
+}
+.homepage .footer {
+  position:fixed;
+  bottom:0
+}
+.footer {
+  width: 100%;
+  background-color: #eee;
+  padding: 1em 0 2em 0;
+  border-top: 1px solid #ddd;
+  height: 200px;
+}
+.footer .blocks {
+  margin-left: 50%;
+  width: 50%;
+}
+.footer .blocks .align {
+  margin-left: -72%;
+  width: 144%;
+}
+.footer .block {
+  font-size: 1em;
+  width: 33.33%;
+  display: inline-block;
+  vertical-align: top;
+}
+.footer .block .content {
+  padding: 1.5em;
+}
+.footer .block h2 {
+  font-size: 1em;
+  border-bottom: 1px dotted #aaa;
+  padding-bottom: 0.2em;
+  margin-bottom: 0.6em;
+}
+.footer .block p {
+  font-size: 0.8em;
+  margin: 0;
+}
+
+
+@media screen and (max-width: 50em), screen and (max-device-width: 50em) {
+  .container {
+    width: auto;
+    padding: 0 2em;
+  }
+  .back {
+    position: static;
+  }
+  h1 {
+    font-size: 2em;
+    padding-top: 0.5em;
+  }
+  .article-body {
+    width: 100%;
+  }
+  .homepage .footer {
+    position: static;
+  }
+  .footer .block {
+    display: block;
+    width: auto;
+  }
+  .footer .blocks {
+    margin: 0;
+    width: auto;
+  }
+  .footer .blocks .align {
+    margin: 0;
+    width: auto;
+  }
+  .footer {
+    height: auto;
+    width: auto;
+  }
+  .listing h2 {
+    margin-bottom: 0.1em;
+  }
+  .listing .date {
+    text-align: left;
+  }
+}

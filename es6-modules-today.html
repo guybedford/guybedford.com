@@ -1,0 +1,134 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>Using ES6 Modules Today</title>
+  <meta name="description" content="Polyfilling the ES6 Module Loader in browsers today">
+  <meta name="viewport" content="width=device-width">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+      <div class="article">
+        <a class="back" href="/" target="_self">&laquo;</a>
+        <div class="article-header">
+          <h1 class="title">Using ES6 Modules Today</h1>
+          <div class="meta">
+            <span class="author">Guy Bedford</span>
+            &sdot;
+            <span class="date">26 June 2013 <em>(revised 16 Feb 2014)</em></span>
+          </div>
+          <div class="clear"></div>
+        </div>
+        <div class="article-body">
+          <p><a href="http://wiki.ecmascript.org/doku.php?id=harmony:modules" target="_blank">ES6 modules</a> are set to form the standard module format for the web. Instead of waiting around for browsers to support the new syntax,
+      it is now possible to use them directly in all browsers today using the <a href="https://github.com/ModuleLoader/es6-module-loader" target="_blank">ES6 loader polyfill</a>.</p>
+    <p>The great thing is that using the polyfill has very few tradeoffs in comparison to other module systems in the browser.<p>
+    <p>As soon as the ES6 specification is confirmed, polyfill approaches like this should be able to form the way forward for modular development
+      in the browser. <em>Note that the specification is still subject to change, thus this approach is not yet ready for production use.</em></p>
+
+    <h2>The ES6 Loader</h2>
+
+    <p>The <a href="https://github.com/ModuleLoader/es6-module-loader" target="_blank">polyfill</a> can be included in the page with the single script tag:</p>
+    <pre><code class="html"> &lt;script src="es6-module-loader.js">&lt;/script></code></pre>
+
+    <p>ES6 modules simply load JavaScript files that specify dependences and exports using the <code>import</code> and <code>export</code> module syntax.<p>
+
+    <p>For example, consider a widget which is dependent on jQuery.</p>
+
+    <p>widget.js:</p>
+    <pre><code class="javascript">import $ from 'jquery';
+
+export function render(container) {
+  var el = $('&lt;div class="widget">&lt;/div>');
+  $(el).click(function() {
+    console.log('widget click');
+  });
+  $(container).append(el);
+};</code></pre>
+
+    <p>To load the widget, we can use the <code>window.System</code> default loader provided by the ES6 module API, allowing us to write:</p>
+
+    <pre><code class="javascript">&lt;script>
+  System.import('widget').then(function(widget) {
+    widget.render(document.body);
+  });
+&lt;/script></code></pre>
+
+    <p>By default, the ES6 module loader will assume that these module names can be found at:</p>
+    <pre><code class="javascript">baseURL + '/' + moduleName + '.js'</code></pre>
+
+    <p>So for this to work without any configuration we just need to ensure that we include the files <code>widget.js</code> and <code>jquery.js</code> in the same folder as our HTML page.</p>
+
+    <p>With the polyfill, the above will work identically to the spec, allowing the full use of ES6 modules today.</p>
+
+    <h2>ES6 Loader Polyfill Approach</h2>
+
+    <p>The <a href="https://github.com/ModuleLoader/es6-module-loader" target="_blank">loader polyfill</a> provides the <code>Loader</code>, <code>System</code> and <code>Module</code> globals identically to the latest specification. It uses XHR to load the script, parses out the <code>import</code> and <code>export</code> statements, loads dependencies and executes the code.</p>
+
+    <p>The loader polyfill comes in two parts - a 17KB loader polyfill, which works with <a href="https://github.com/google/traceur-compiler" target="_blank">Traceur</a> for ES6 parsing.</p>
+
+    <p>The Traceur parser is only loaded when module syntax is present, so that when loading non-module scripts, the polyfill need only be 17KB.</p>
+
+    <p>The idea is that builds would be used in production, just like every other module system today, to convert modules into a single script or set of scripts that simply define the modules directly.</p>
+
+    <p>These built files would be of the form:</p>
+    <pre><code class="javascript">System.set('jquery', new Module({
+  'jQuery': ...
+}));</code></pre>
+
+    <p>The loader can then work seamlessly between production and development, allowing only the 10KB version to be used in production. Since all current module systems need a production build, the above is not actually such a high cost.</p>
+        </div>
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+          var disqus_shortname = 'guybedford';
+          (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+        </script>
+      </div>
+
+    <div class="push"></div>
+  </div>
+  <div class="footer">
+    <div class="blocks"><div class="align">
+      <div class="block"><div class="content">
+        <h2>About</h2>
+        <p>I'm a software engineer and open source contributor, currently working on <a href="http://jspm.io/">jspm.io</a> and <a href="https://github.com/systemjs/systemjs">SystemJS</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Work</h2>
+        <p>I'm available for consulting work. Project support is welcome. My Bitcoin address is <a href="bitcoin:1PVt4Qr7j36x9jJrWc8Yr2AiBi52GJHY6f">1PVt4Qr7j36x9jJrWc8Yr2AiBi52GJHY6f</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Contact</h2>
+        <p>Contact me via email (@gmail.com), the <a href="https://gitter.im/jspm/jspm">jspm gitter room</a>,
+        on <a href="https://twitter.com/guybedford">Twitter</a>, <a href="https://github.com/guybedford">GitHub</a> or <a href="http://za.linkedin.com/in/guybedford">LinkedIn</a>.
+    </div></div>
+  </div>
+  <script>
+    Array.prototype.forEach.call(document.querySelectorAll('code.javascript, code.lang-javascript, code.html, code.lang-html'), function(code) {
+      code.innerHTML = code.innerHTML
+        .replace(/\/\/(.*)/gm, '<span class="comment">//$1</span>')
+        .replace(/('[^']*')/gm, '<span class="string">$1</span>')
+        .replace(/([^#\d])(\d+)/gm, '$1<span class="number">$2</span>')
+        .replace(/([^\.])(for|function|new|throw|return|var|if|else|true|false|this|import|export class|export|from)\b/gm, '$1<span class="keyword">$2</span>');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('a'), function(a) {
+      if ((a.getAttribute('href') || '#').substr(0, 1) != '#' && !a.getAttribute('target'))
+        a.setAttribute('target', '_blank');
+    });
+  </script>
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-16744385-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+</body>
+</html>

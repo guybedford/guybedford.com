@@ -1,0 +1,80 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>An Introduction to jspm (video)</title>
+  <meta name="description" content="An introduction to the jspm project and how I got involved in it">
+  <meta name="viewport" content="width=device-width">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+      <div class="article">
+        <a class="back" href="/" target="_self">&laquo;</a>
+        <div class="article-header">
+          <h1 class="title">An Introduction to jspm (video)</h1>
+          <div class="meta">
+            <span class="author">Guy Bedford</span>
+            &sdot;
+            <span class="date">22 April 2014</span>
+          </div>
+          <div class="clear"></div>
+        </div>
+        <div class="article-body">
+          <p><em>Here&#39;s the video from the introductory talk I gave on jspm at Mountain West JS 2014. I explain what factors motivated me to start working on jspm and
+some of the key problems it is trying to solve.</em></p>
+<iframe width="640" height="360" src="http://www.youtube.com/embed/MXzQP38mdnE?rel=0" frameborder="0" allowfullscreen></iframe>
+        </div>
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+          var disqus_shortname = 'guybedford';
+          (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+        </script>
+      </div>
+
+    <div class="push"></div>
+  </div>
+  <div class="footer">
+    <div class="blocks"><div class="align">
+      <div class="block"><div class="content">
+        <h2>About</h2>
+        <p>I'm a software engineer and open source contributor, currently working on <a href="http://jspm.io/">jspm.io</a> and <a href="https://github.com/systemjs/systemjs">SystemJS</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Work</h2>
+        <p>I'm available for consulting work. Project support is welcome. My Bitcoin address is <a href="bitcoin:1DTWgHqLzZJhkqFkR1aqwCQiAMYeR9GV2W">1DTWgHqLzZJhkqFkR1aqwCQiAMYeR9GV2W</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Contact</h2>
+        <p>Contact me via email (@gmail.com), the <a href="https://gitter.im/jspm/jspm">jspm gitter room</a>,
+        on <a href="https://twitter.com/guybedford">Twitter</a>, <a href="https://github.com/guybedford">GitHub</a> or <a href="http://za.linkedin.com/in/guybedford">LinkedIn</a>.
+    </div></div>
+  </div>
+  <script>
+    Array.prototype.forEach.call(document.querySelectorAll('code.javascript, code.lang-javascript, code.html, code.lang-html'), function(code) {
+      code.innerHTML = code.innerHTML
+        .replace(/\/\/(.*)/gm, '<span class="comment">//$1</span>')
+        .replace(/('[^']*')/gm, '<span class="string">$1</span>')
+        .replace(/([^#\d])(\d+)/gm, '$1<span class="number">$2</span>')
+        .replace(/([^\.])(for|function|new|throw|return|var|if|else|true|false|this|import|export class|export|from)\b/gm, '$1<span class="keyword">$2</span>');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('a'), function(a) {
+      if ((a.getAttribute('href') || '#').substr(0, 1) != '#' && !a.getAttribute('target'))
+        a.setAttribute('target', '_blank');
+    });
+  </script>
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-16744385-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+</body>
+</html>

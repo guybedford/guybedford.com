@@ -1,0 +1,94 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>Guy Bedford</title>
+  <meta name="description" content="Guy Bedford">
+  <meta name="viewport" content="width=device-width">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="homepage">
+  <div class="container">
+
+      <div class="contents">
+  <h1 class="hometitle">Blog</h1>
+
+    <a class="listing" href="/systemjs-alignment" target="_self">
+      <h2>SystemJS 0.20 - Aligning with browser modules</h2>
+      <span class="date">24 January 2017</span>
+      <p>An update on the release, specification changes and project directions</p>
+    </a>
+
+    <a class="listing" href="/systemjs-mocha-istanbul" target="_self">
+      <h2>Testing and coverage with SystemJS, Mocha + Istanbul</h2>
+      <span class="date">17 June 2016</span>
+      <p>A description of testing approaches in SystemJS</p>
+    </a>
+
+    <a class="listing" href="/jspm-0.16" target="_self">
+      <h2>jspm 0.16 released</h2>
+      <span class="date">18 August 2015</span>
+      <p>Release post on the recent upgrades in jspm and SystemJS</p>
+    </a>
+
+    <a class="listing" href="/jspm-introduction" target="_self">
+      <h2>An Introduction to jspm (video)</h2>
+      <span class="date">22 April 2014</span>
+      <p>An introduction to the jspm project and how I got involved in it</p>
+    </a>
+
+    <a class="listing" href="/practical-workflows-for-es6-modules" target="_self">
+      <h2>Practical Workflows for ES6 Modules</h2>
+      <span class="date">6 April 2014 <em>(revised 20 July 2014)</em></span>
+      <p>Some techniques for working with ES6 module syntax and loaders</p>
+    </a>
+
+    <a class="listing" href="/es6-modules-today" target="_self">
+      <h2>Using ES6 Modules Today</h2>
+      <span class="date">26 June 2013 <em>(revised 16 Feb 2014)</em></span>
+      <p>Polyfilling the ES6 Module Loader in browsers today</p>
+    </a>
+
+</div>
+
+    <div class="push"></div>
+  </div>
+  <div class="footer">
+    <div class="blocks"><div class="align">
+      <div class="block"><div class="content">
+        <h2>About</h2>
+        <p>I'm a software engineer and open source contributor, currently working on <a href="http://jspm.io/">jspm.io</a> and <a href="https://github.com/systemjs/systemjs">SystemJS</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Work</h2>
+        <p>I'm available for consulting work. Project support is welcome. My Bitcoin address is <a href="bitcoin:1DTWgHqLzZJhkqFkR1aqwCQiAMYeR9GV2W">1DTWgHqLzZJhkqFkR1aqwCQiAMYeR9GV2W</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Contact</h2>
+        <p>Contact me via email (@gmail.com), the <a href="https://gitter.im/jspm/jspm">jspm gitter room</a>,
+        on <a href="https://twitter.com/guybedford">Twitter</a>, <a href="https://github.com/guybedford">GitHub</a> or <a href="http://za.linkedin.com/in/guybedford">LinkedIn</a>.
+    </div></div>
+  </div>
+  <script>
+    Array.prototype.forEach.call(document.querySelectorAll('code.javascript, code.lang-javascript, code.html, code.lang-html'), function(code) {
+      code.innerHTML = code.innerHTML
+        .replace(/\/\/(.*)/gm, '<span class="comment">//$1</span>')
+        .replace(/('[^']*')/gm, '<span class="string">$1</span>')
+        .replace(/([^#\d])(\d+)/gm, '$1<span class="number">$2</span>')
+        .replace(/([^\.])(for|function|new|throw|return|var|if|else|true|false|this|import|export class|export|from)\b/gm, '$1<span class="keyword">$2</span>');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('a'), function(a) {
+      if ((a.getAttribute('href') || '#').substr(0, 1) != '#' && !a.getAttribute('target'))
+        a.setAttribute('target', '_blank');
+    });
+  </script>
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-16744385-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+</body>
+</html>

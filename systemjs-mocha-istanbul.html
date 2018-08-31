@@ -1,0 +1,427 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>Testing and coverage with SystemJS, Mocha + Istanbul</title>
+  <meta name="description" content="Testing and coverage with SystemJS, Mocha + Istanbul">
+  <meta name="viewport" content="width=device-width">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+      <div class="article">
+        <a class="back" href="/" target="_self">&laquo;</a>
+        <div class="article-header">
+          <h1 class="title">Testing and coverage with SystemJS, Mocha + Istanbul</h1>
+          <div class="meta">
+            <span class="author">Guy Bedford</span>
+            &sdot;
+            <span class="date">17 June 2016 <em>(revised 24 June 2016)</em></span>
+          </div>
+          <div class="clear"></div>
+        </div>
+        <div class="article-body">
+<p>When it comes to testing workflows with SystemJS, most test frameworks and libraries don't actually come with existing instructions for how to get started with testing using SystemJS.</p>
+<p>This post runs through a simple method for using Mocha with SystemJS test files in Node and the browser. <strong>We then demonstrate how to apply Istanbul coverage instrumentation to SystemJS to get full coverage reports on original sources back from tests running in both Node and the browser.</strong></p>
+<p>The methods shown here should help you to create testing workflows that work in a SystemJS way. All the examples below come with separate Vanilla SystemJS and jspm 0.17-beta configuration sections depending on whether or not you're using jspm as well. If not using jspm, you can easily skip the jspm sections. If using jspm it's advisable to read the Vanilla SystemJS sections anyway.</p>
+<p><em>This post as well as the development of the coverage workflow was made possible by sponsorship from One.com.</em>
+<h2>Using Mocha with SystemJS</h2>
+<p>For the example app, let's say we have a super interesting counter module -</p>
+<p>counter.js</p>
+<pre><code class="lang-javascript">export class Counter {
+  constructor() {
+    this.value = 0;
+  }
+  increment() {
+    return ++this.value;
+  }
+}</code></pre>
+<p>We want to be able to test this code with tests that are themselves written as ES6 modules taking advantage of
+language features like async functions:</p>
+<p>tests.js</p>
+<pre><code class="lang-javascript">import expect from 'unexpected';
+
+export let SimpleTestSuite = {
+  'First Test': async function() {
+    let Counter = (await SystemJS.import('counter.js')).Counter;
+    let c = new Counter();
+    expect(c.increment(), 'to be', 1);
+    expect(c.increment(), 'to be', 2);
+  }
+};</code></pre>
+<p>In the above example, we dynamically import the module being tested within the test itself with <code>SystemJS.import('counter.js')</code>.
+The use of async functions allows the test code running this dynamic import promise chain to be written succinctly.</p>
+<p><strong>So, how can we run the above <code>tests.js</code> file with full SystemJS support in Mocha?</strong></p>
+<h3>Vanilla SystemJS Configuration</h3>
+<p>In order to get the tests to run we will need to install the following npm dependencies:</p>
+<pre><code>npm install mocha systemjs systemjs-plugin-babel unexpected</code></pre>
+<p>To wire these up, we create a SystemJS configuration file setting up our transpiler and module paths:</p>
+<p>system.config.js</p>
+<pre><code class="lang-javascript">SystemJS.config({
+  transpiler: 'plugin-babel',
+  map: {
+    'plugin-babel': 'node_modules/systemjs-plugin-babel/plugin-babel.js',
+    'systemjs-babel-build': 'node_modules/systemjs-plugin-babel/systemjs-babel-browser.js',
+    'unexpected': 'node_modules/unexpected/unexpected.js',
+  }
+});</code></pre>
+<p>Finally we can create our main test runner code:</p>
+<p>runner.js</p>
+<pre><code class="lang-javascript">var SystemJS = require('systemjs');
+var Mocha = require('mocha');
+
+SystemJS.import('./system.config.js')
+.then(function() {
+  return SystemJS.import('./tests.js');
+})
+.then(function(tests) {
+  var runner = new Mocha({ ui: 'exports' });
+
+  runner.suite.emit('require', tests);
+
+  return new Promise((resolve, reject) => {
+    runner.run((failures) => {
+      if (failures)
+        reject(failures);
+      else
+        resolve();
+    });
+  });
+})
+.catch(console.error.bind(console));</code></pre>
+<p>The above uses the NodeJS require system to load SystemJS and Mocha, and then uses SystemJS to load further its own configuration and the tests.</p>
+<p>The important thing here is that we are loading the tests themselves through SystemJS, which we then pipe into Mocha using the <code>exports</code> ui.</p>
+<p>This is the UI that allows us to write the <code>tests.js</code> above as an exports object where the suites are export names and the object properties tests.</p>
+<p>The full tests can then be run in Node via:</p>
+<pre><code>node runner.js</code></pre>
+<p>giving the output:</p>
+<pre><code>  SimpleTestSuite
+    ✓ First Test (46ms)
+
+  1 passing (54ms)</code></pre>
+<h3>BDD Tests</h3>
+<p>We're writing these tests with an <em>exports</em> interface instead of a <em>bdd</em> <code>describe(...)</code> interface in Mocha because the <em>bdd</em> interface assumes the existence of global <code>describe</code> and <code>it</code> variables in the execution scope.
+  To use the bdd style, use the alternative approach:
+<pre><code class="lang-javascript">var SystemJS = require('systemjs');
+var Mocha = require('mocha');
+
+SystemJS.import('./system.config.js')
+.then(function() {
+  var runner = new Mocha({ ui: 'bdd' });
+
+  // set up the global variables
+  runner.suite.emit('pre-require', global, 'global-mocha-context', runner);
+
+  return SystemJS.import('./tests.js')
+  .then(function(tests) {
+    return new Promise((resolve, reject) => {
+      runner.run((failures) => {
+        if (failures)
+          reject(failures);
+        else
+          resolve();
+      });
+    });
+  });
+})
+.catch(console.error.bind(console));</code></pre>
+
+<h3>jspm Configuration (0.17-beta)</h3>
+<p>In a new jspm project, we can get straight to installing mocha and unexpected:</p>
+<pre><code>jspm install mocha unexpected --dev</code></pre>
+<p>jspm then auto-generates the configuration file, so we just need to write our <code>runner.js</code> file now.
+This can now be written as an ES module directly as everything is now running through the SystemJS import mechanism:</p>
+<p>runner.js</p>
+<pre><code class="lang-javascript">import Mocha from 'mocha';
+
+SystemJS.import('./tests.js')
+.then(function(tests) {
+  var runner = new Mocha({
+    ui: 'exports',
+    // this line is what will allow this runner to work in both the browser and Node
+    reporter: typeof window != 'undefined' ? 'html' : 'spec'
+  });
+
+  runner.suite.emit('require', tests);
+
+  return new Promise((resolve, reject) => {
+    runner.run((failures) => {
+      if (failures)
+        reject(failures);
+      else
+        resolve();
+    });
+  });
+})
+.catch(console.error.bind(console));</code></pre>
+<p>We could have equally used <code>import tests from './tests.js'</code> in the above, but the use of the dynamic <code>SystemJS.import</code> will make the code ready for adding code coverage shortly.</p>
+<p>To execute this module in jspm, use:</p>
+<pre><code>jspm run runner.js</code></pre>
+<p>which runs the code as a top-level <code>SystemJS.import</code> itself with all jspm resolution rules applied, giving the same test output as expected above.</p>
+<h2>Running Mocha tests in the Browser</h2>
+<p>We can then take these same tests and run them directly in the browser.</p>
+<h3>Vanilla SystemJS</h3>
+<p>To run the vanilla SystemJS tests, we load Mocha and its CSS into the page, as well as SystemJS and its configuration file:</p>
+<p>test-browser.html</p>
+<pre><code class="lang-html">&lt;!doctype html&gt;
+&lt;link rel="stylesheet" href="node_modules/mocha/mocha.css" /&gt;
+&lt;body&gt;
+  &lt;div id="mocha"&gt;&lt;/div&gt;
+&lt;script src="node_modules/systemjs/dist/system.src.js"&gt;&lt;/script&gt;
+&lt;script src="node_modules/mocha/mocha.js"&gt;&lt;/script&gt;
+&lt;script src="system.config.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  SystemJS.import('./tests.js').then(function(tests) {
+    var runner = new Mocha({ ui: 'exports', reporter: 'html' });
+    runner.suite.emit('require', tests);
+  });
+&lt;/script&gt;</code></pre>
+<p>The tests are imported by SystemJS and run the same as we did in the <code>runner.js</code> file, but now adjusted for the browser.</p>
+<h3>jspm</h3>
+<p>The jspm tests are already universal - they can be directly imported in the browser with the standard jspm template:</p>
+<p>test-browser.html</p>
+<pre><code class="lang-html">&lt;!doctype html&gt;
+  &lt;script src="jspm_packages/system.src.js"&gt;&lt;/script&gt;
+  &lt;script src="jspm.config.js"&gt;&lt;/script&gt;
+  &lt;div id="mocha"&gt;&lt;/div&gt;
+  &lt;script&gt;
+    SystemJS.import('./runner.js');
+  &lt;/script&gt;</code></pre>
+<h2>Generating Istanbul Coverage Reports</h2>
+<p>Now that all the tests are running through SystemJS, we can look at adding Istanbul coverage into SystemJS to generate coverage reports.</p>
+<p>The way we handle this is via extending the SystemJS <code>translate</code> hook to add the Istanbul instrumentation as the final step after all
+other SystemJS compilations.</p>
+<p>There is some subtlety to this process, so there's an experimental SystemJS helper we will use, <code>systemjs-istanbul-hook</code>, which provides the custom SystemJS translate hook for us.</p>
+<p><code>systemjs-istanbul-hook</code> supports the ability to get full source maps support back to the original files loaded by SystemJS, regardless of transpilation or plugins using the <a href="https://github.com/SitePen/remap-istanbul">remap-istanbul</a> project.</p>
+<h3>Vanilla SystemJS Coverage</h3>
+<p>Continuing from the previous vanilla setup with Mocha for testing, we install the hook:</p>
+<pre><code>npm install systemjs-istanbul-hook</code></pre>
+<p>This helper can then be used to extend SystemJS with the following code in the previous <code>runner.js</code>
+(the commented lines are the ones that have changed):</p>
+<p>runner.js</p>
+<pre><code class="lang-javascript">var SystemJS = require('systemjs');
+var Mocha = require('mocha');
+
+// extend the SystemJS translate hook with coverage instrumentation
+var systemIstanbul = require('systemjs-istanbul-hook');
+systemIstanbul.hookSystemJS(SystemJS);
+
+var fs = require('fs');
+
+SystemJS.import('./system.config.js')
+.then(function() {
+  return SystemJS.import('./tests.js');
+})
+.then(function(tests) {
+  var runner = new Mocha({ ui: 'exports' });
+
+  runner.suite.emit('require', tests);
+
+  return new Promise((resolve, reject) => {
+    runner.run((failures) => {
+      if (failures)
+        reject(failures);
+      else
+        resolve();
+    });
+  });
+})
+.then(function() {
+  // after running the tests, save the coverage file
+  var fs = require('fs');
+  fs.writeFileSync('coverage.json', JSON.stringify(systemIstanbul.remapCoverage(__coverage__)));
+})
+.catch(console.error.bind(console));</code></pre>
+<p>Having extended SystemJS with coverage instrumentation, we then run the tests as before. After running the tests, the <code>__coverage__</code> global contains the reported coverage for all code imported by SystemJS. We remap the source maps in this generated global coverage object to get coverage reports on the original source files, which is saved locally.</p>
+<p>The report for this coverage can then be generated by running (after an <code>npm install -g istanbul</code>):</p>
+<pre><code>istanbul report</code></pre>
+<p>and viewed at <code>coverage/lcov-report/index.html</code>.</p>
+<p>Coverage generation takes time, so to exclude files from coverage instrumentation, an optional second argument can be added to the hook containing a filter:</p>
+<pre><code class="lang-javascript">systemIstanbul.hookSystemJS(SystemJS, function exclude(address) {
+  // exclude adding coverage to anything not in the tests folder
+  if (!address.startsWith(SystemJS.baseURL + 'tests/'))
+    return false;
+});</code></pre>
+<h3>jspm Coverage</h3>
+<p>With jspm, it is still best to install <code>systemjs-istanbul-hook</code> via npm:</p>
+<pre><code>npm install systemjs-istanbul-hook</code></pre>
+<p><em>While Istanbul can be made to work correctly through jspm install, remap-istanbul can't work this way due to the use of unsupported <a href="https://github.com/SitePen/remap-istanbul/blob/master/lib/remap.js#L7">AMD define plugin patterns</a>.</em></p>
+<p>We can then instrument <code>runner.js</code> in a similar way:</p>
+<pre><code class="lang-javascript">import Mocha from 'mocha';
+
+// extend the SystemJS translate hook with coverage instrumentation
+import systemIstanbul from '@node/systemjs-istanbul-hook';
+systemIstanbul.hookSystemJS(SystemJS);
+
+import fs from '@node/fs';
+
+SystemJS.import('./tests.js')
+.then(function(tests) {
+  var runner = new Mocha({
+    ui: 'exports',
+    reporter: typeof window != 'undefined' ? 'html' : 'spec'
+  });
+
+  runner.suite.emit('require', tests);
+
+  return new Promise((resolve, reject) => {
+    runner.run((failures) => {
+      if (failures)
+        reject(failures);
+      else
+        resolve();
+    });
+  });
+})
+// after running the tests, save the coverage file
+.then(function() {
+  fs.writeFileSync('coverage.json', JSON.stringify(systemIstanbul.remapCoverage(__coverage__)));
+})
+.catch(console.error.bind(console));</code></pre>
+<blockquote>
+<p>We use the <code>@node/fs</code> and <code>@node/systemjs-istanbul-hook</code> syntax to load a NodeJS module with the NodeJS module resolution through SystemJS (although note that adding these imports to our code makes it no longer compatible with running in the browser).</p>
+</blockquote>
+<p>To view the coverage report:</p>
+<pre><code>jspm run runner.js &amp;&amp; istanbul report &amp;&amp; open coverage/lcov-report/index.html</code></pre>
+<p>again assuming <code>npm install -g istanbul</code> to allow report generation.</p>
+<h2>Browser Coverage Reports</h2>
+<p>To support browser-based coverage generation, the easiest method is to use SystemJS Builder to create a bundle that we run in the browser, with the istanbul instrumentation hook applied to SystemJS Builder before bundling.</p>
+<p>This way we can get the exact same source maps support to original files for the coverage, provided we wire the coverage JSON back for remapping.</p>
+<p>The wiring here is a little involved depending on the exact workflow, so an outline is given that can be adapted depending on your exact use case.</p>
+<h3>Instrumenting Browser Bundles</h3>
+<p>1. Instrumenting the SystemJS Builder loader at bundling time with coverage:</p>
+<pre><code class="lang-javascript">// var Builder = require("jspm").Builder // for jspm
+var Builder = require('systemjs-builder');
+
+var builder = new Builder();
+
+// hook the builder loader with the coverage instrumentation
+var systemIstanbul = require('systemjs-istanbul-hook');
+systemIstanbul.hookSystemJS(builder.loader);
+
+  // unnecessary with jspm
+  builder.loadConfigSync('./system.config.js');
+
+// having hooked the coverage, bundle the app and tests
+builder.bundle('./tests.js + counter.js', 'browser-coverage-bundle.js')
+.then(function() {
+  // save the original source mapping data for remapping in a separate process
+  // if remapping happens in the same process this is unnecessary of course
+  var originalSources = systemIstanbul.originalSources;
+  fs.writeFileSync('original-source-data.json', JSON.stringify(originalSources));
+});</code></pre>
+<p>2. Having run the bundled code in the browser, we retrieve the <code>window.__coverage__</code> global object and have it sent
+back to the server for remapping:</p>
+<pre><code class="lang-javascript">var systemIstanbul = require('systemjs-istanbul-hook');
+
+// this implementation detail is left out
+return retrieveBrowserCoverageObject()
+.then(function(browserCoverage) {
+  var originalSources = JSON.parse(fs.readFileSync('original-source-data.json'));
+
+  // remap the coverage to the original sources
+  var mappedCoverage = systemIstanbul.remap(browserCoverage, originalSources);
+  fs.writeFileSync('browser-coverage.json', JSON.stringify(mappedCoverage));
+});</code></pre>
+<p>We then generate the report from the <code>coverage.json</code> with <code>istanbul report</code> just as before.</p>
+<p>The <code>originalSources</code> object of <code>systemIstanbul</code> is a local cache of the source and source map information that it picks up during execution of the SystemJS translate hook. It is the combination of this <code>originalSources</code> and and the <code>__coverage__</code> object in the browser that is remapped by the <code>remapCoverage</code> function back into coverage data on the original sources loaded by SystemJS.</p>
+<p>If we'd instrumented the bundle directly without a hook mechanism like this we'd still get coverage, but on the generated bundle code instead, so this provides the highest parity method for obtaining flexible coverage reports regardless of what we load through SystemJS.</p>
+<p>For more information on the approach, <a href="http://github.com/guybedford/systemjs-istanbul">see the systemjs-istanbul-hook project page</a>.</p>
+<h3>Compile server alternative</h3>
+<p>There is another possible workflow here and that is to send <em>precompiled</em> module files to the browser that are individually instrumented.
+Instead of creating a single bundle, we create a server that sends compiled modules to SystemJS.</p>
+<p>For an example of how a precompilation server approach can work, see the <a href="https://github.com/guybedford/systemjs-istanbul/blob/master/test/compilation-server.js">example server</a>,
+although note that this approach is highly experimental.</p>
+<h3>Avoiding Catches with Paths configuration</h3>
+<p>One catch that is worth mentioning is that in most real world examples you would have a <code>test</code>
+folder containing the tests that is contained within the main project.</p>
+<p>When this happens, we want to reference <code>node_modules</code> and <code>app</code> from the directory below the <code>test</code> folder.
+This simple pathing change can make life very complicated without knowing the right way to handle pathing configuration
+for SystemJS in this case.</p>
+<p>As a general rule, when running vanilla SystemJS configurations, <strong>always configure paths for folder locations, even if they
+are identity maps</strong>:</p>
+<pre><code class="lang-javascript">SystemJS.config({
+  paths: {
+    'app/': 'app/',
+    'node_modules/': 'node_modules/'
+  }
+});</code></pre>
+<p>This will help when bundling as it avoids the <code>Unable to calculate canonical name to ...</code> error, and also makes
+it much simpler when we want to move paths around.</p>
+<p>When moving all the test files into a <code>test</code> folder, we need then only change:</p>
+<pre><code class="lang-javascript">SystemJS.config({
+  paths: {
+    'app/': '../app/',
+    'node_modules/': '../node_modules/'
+  }
+});</code></pre>
+<p>when running in Node.</p>
+<p><em>Paths configuration is environment-specific configuration.</em> So in the vanilla SystemJS configuration case, we don't want to necessarily
+include this paths configuration in the <code>system.config.js</code> file as it may not be the same between the browser and Node environments.</p>
+<p>Instead this is something that can be worth including with a script tag before loading the SystemJS configuration in the browser:</p>
+<pre><code class="lang-html">&lt;script&gt;
+SystemJS.config({
+  paths: {
+    'app/': '/served/app/',
+    'node_modules/': '/served/node_modules/'
+  }
+});
+&lt;/script&gt;</code></pre>
+<p>and similarly a separate configuration call in NodeJS.</p>
+<h2>That's all</h2>
+<p>Hopefully the above gives some helpful directions on how to approach integration between SystemJS, Mocha and Istanbul.</p>
+<p>Questions and feedback are welcome in the comments. If you build something with it please do share what you come up with!</p>
+        </div>
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+          var disqus_shortname = 'guybedford';
+          (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+        </script>
+      </div>
+
+    <div class="push"></div>
+  </div>
+  <div class="footer">
+    <div class="blocks"><div class="align">
+      <div class="block"><div class="content">
+        <h2>About</h2>
+        <p>I'm a software engineer and open source contributor, currently working on <a href="http://jspm.io/">jspm.io</a> and <a href="https://github.com/systemjs/systemjs">SystemJS</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Work</h2>
+        <p>I'm available for consulting work. Project support is welcome. My Bitcoin address is <a href="bitcoin:1DTWgHqLzZJhkqFkR1aqwCQiAMYeR9GV2W">1DTWgHqLzZJhkqFkR1aqwCQiAMYeR9GV2W</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Contact</h2>
+        <p>Contact me via email (@gmail.com), the <a href="https://gitter.im/jspm/jspm">jspm gitter room</a>,
+        on <a href="https://twitter.com/guybedford">Twitter</a>, <a href="https://github.com/guybedford">GitHub</a> or <a href="http://za.linkedin.com/in/guybedford">LinkedIn</a>.
+    </div></div>
+  </div>
+  <script>
+    Array.prototype.forEach.call(document.querySelectorAll('code.javascript, code.lang-javascript, code.html, code.lang-html'), function(code) {
+      code.innerHTML = code.innerHTML
+        .replace(/\/\/(.*)/gm, '<span class="comment">//$1</span>')
+        .replace(/('[^']*')/gm, '<span class="string">$1</span>')
+        .replace(/([^#\d]|^)(\d+)/gm, '$1<span class="number">$2</span>')
+        .replace(/([^\.]|^)(for|function|new|throw|return|var|if|else|true|false|this|import|export class|export|from)\b/gm, '$1<span class="keyword">$2</span>');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('a'), function(a) {
+      if ((a.getAttribute('href') || '#').substr(0, 1) != '#' && !a.getAttribute('target'))
+        a.setAttribute('target', '_blank');
+    });
+  </script>
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-16744385-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+</body>
+</html>

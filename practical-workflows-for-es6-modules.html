@@ -1,0 +1,363 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>Practical Workflows for ES6 Modules</title>
+  <meta name="description" content="Some techniques for working with ES6 module syntax and loaders">
+  <meta name="viewport" content="width=device-width">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+      <div class="article">
+        <a class="back" href="/" target="_self">&laquo;</a>
+        <div class="article-header">
+          <h1 class="title">Practical Workflows for ES6 Modules</h1>
+          <div class="meta">
+            <span class="author">Guy Bedford</span>
+            &sdot;
+            <span class="date">6 April 2014 <em>(revised 20 July 2014)</em></span>
+          </div>
+          <div class="clear"></div>
+        </div>
+        <div class="article-body">
+          <p><em>ES6 modules are set to become the future replacement for the AMD and CommonJS module formats. They are defined by the current <a href="https://people.mozilla.org/~jorendorff/es6-draft.html#sec-ecmascript-language-modules-and-scripts">ES6 Specification</a>
+and will be implemented in JavaScript engines in the future in both the browser and the server.
+This article covers a variety of practical workflows for implementing ES6 modules. These approaches are very new,
+and there will still be edge cases, but these principles provide a path forward towards ES6 for use in both new and existing projects today.</em></p>
+<p>The following workflows are based on the talk I gave recently at Fluent 2014, <a href="https://www.youtube.com/watch?v=0VUjM-jJf2U">you can watch the 35 minute presentation covering roughly the same material here</a>.</p>
+<h2 id="why-use-es6-modules">Why Use ES6 Modules</h2>
+<p>The <a href="https://people.mozilla.org/~jorendorff/es6-draft.html#sec-ecmascript-language-modules-and-scripts">ES6 Specification</a> defines two primary module features:</p>
+<ol>
+<li><p><strong>Module syntax</strong>
+The way we write modules in our code with the new <code>import</code>, <code>export</code> and <code>module</code> keywords.</p>
+</li>
+<li><p><strong>The module loader</strong>
+The module loading pipeline instructing the JavaScript engine how to handle loading modules. It comprehensively specifies
+the entire loading algorithm through a module loader class.</p>
+<p>This module loader instance can then be provided as a global variable in the environment, called <code>System</code> in the browser,
+which can then be called directly allowing dynamic loads in the browser with <code>System.import(&#39;module-name&#39;)</code>.</p>
+</li>
+</ol>
+<p>The theory behind why we might want to start write our code using ES6 module syntax today is because it means we are writing
+our code based on what is a module specification for the future versions of the language.</p>
+<p>Many web applications need to dynamically load scripts after the initial page load. In order to do this, we need a dynamic
+module loader. We can in fact use the <code>System</code> dynamic loader in browsers today in production using the
+<a href="https://github.com/ModuleLoader/es6-module-loader">ES6 Module Loader polyfill</a> with the <a href="https://github.com/systemjs/systemjs">SystemJS</a> loader extension.</p>
+<p><em>The reason we would use the <code>System</code> browser loader with a polyfill is exactly the same reason we&#39;d use ES6 module syntax -
+to be able to build our applications on top of a spec-compliant module system.</em></p>
+<h2 id="future-es6-loader-bundling-scenarios">Future ES6 Loader Bundling Scenarios</h2>
+<p>There has been some complaint about the fact that the ES6 Module Loader provides no native bundling format. But this
+becomes clear when understood in terms of the time scales of adoption for the spec.</p>
+<p>The way bundling will be enabled is through improvements at the protocol level such as <a href="http://www.chromium.org/spdy/spdy-whitepaper">SPDY</a> and <a href="http://http2.github.io/">HTTP/2</a> which allow lots of small modules to be
+sent with similar performance to sending an entire file bundle.</p>
+<p>There are also proposals at the specification level for other bundling options at the protocol level, so this is very much the focus
+of the problem.</p>
+<p>The workflows shown here give us some bundling workflows that can work in browsers today, but the real solutions for bundling in the future will be
+for these approaches not to be necessary at all.</p>
+<h2 id="tooling">Tooling</h2>
+<p>These approaches are based on using <a href="https://github.com/google/traceur-compiler">Google&#39;s Traceur project</a> for compilation, the benefit
+over the similar <a href="https://github.com/square/es6-module-transpiler">ES6 Module Transpiler</a> build methods being that it also allows the use of other ES6 syntax features such
+as classes, arrow functions, generators, desctructuring etc.</p>
+<p>The workflows below all use Traceur directly. The following tools provide compilation from ES6 to AMD or CommonJS with Traceur for existing build systems:</p>
+<ul>
+<li><a href="https://github.com/aaronfrost/grunt-traceur">Grunt-Traceur</a> by Aaron Frost, currently being updated</li>
+<li><a href="https://github.com/sindresorhus/gulp-traceur">Gulp-Traceur</a> by Sindre Sorhus</li>
+<li><a href="https://github.com/sindresorhus/broccoli-traceur">Broccoli-Traceur</a> by Sindre Sorhus</li>
+</ul>
+<p>These tools effectively provide the <code>--dir</code> compilation as used in the workflows here.</p>
+<h2 id="workflow-quick-links">Workflow Quick Links</h2>
+<p><strong>Using ES6 modules with NodeJS or Browserify</strong></p>
+<ul>
+<li>If you want to write ES6 modules and use them in NodeJS or Browserify, <a href="#static-workflow-2">compile them into CommonJS</a>.</li>
+</ul>
+<p><strong>Using ES6 modules with existing AMD projects</strong></p>
+<ul>
+<li>To write ES6 modules and use them in an existing AMD project, <a href="#static-workflow-4">compile them into AMD</a>.</li>
+</ul>
+<p><strong>Using the SystemJS dynamic browser loader</strong></p>
+<ul>
+<li>For basic use of the SystemJS, <a href="#dynamic-workflow-2">see an example of loading AMD</a>.</li>
+</ul>
+<p><strong> Production bundling approaches for the SystemJS browser loader</strong></p>
+<ul>
+<li><p>To create single-file bundles for SystemJS with Traceur, <a href="#dynamic-workflow-3">use the Traceur instantiate module output mode</a>.</p>
+</li>
+<li><p>The create custom bundles of code with modules of any module format, <a href="#dynamic-workflow-4">compile with the SystemJS Builder</a>.</p>
+</li>
+</ul>
+<h2 id="static-workflow-examples">Static Workflow Examples</h2>
+<p>For these examples, we use a very simple two module application, consisting of <code>app/app.js</code> and <code>app/module.js</code>.</p>
+<p><code>app/module.js</code> exports a single value:</p>
+<pre><code class="lang-javascript">  export var test = &#39;es6!&#39;;
+</code></pre>
+<p>The main entry point, <code>app/app.js</code> then loads from <code>app/module.js</code> with:</p>
+<pre><code class="lang-javascript">  import {test} from &#39;./module&#39;;
+  console.log(test);
+</code></pre>
+<p>We use relative module syntax and ommit the <code>.js</code> extension just like in CommonJS and AMD.</p>
+<h2 id="using-other-es6-features">Using other ES6 Features</h2>
+<p>Traceur supports a lot of other ES6 syntax features, including classes, generators, arrow functions and destructuring.</p>
+<p>If you want to take advantage of these other ES6 features, all of the above build workflows still apply, except we need to then separately include the <code>traceur-runtime.js</code> file as well.</p>
+<p>The runtime is only 6KB minified and gzipped in production, so it is not a production high cost for the benefits ES6 functionality.</p>
+<p>For example, say we use classes in <code>app/module.js</code> now:</p>
+<pre><code class="lang-javascript">export var test = &#39;es6&#39;;
+export class MyClass {
+  constructor() {
+    console.log(&#39;ES6 Class!&#39;);
+  }
+}
+</code></pre>
+<p>We then load this in <code>app/app.js</code> with:</p>
+<pre><code class="lang-javascript">import {test, MyCLass} from &#39;./module&#39;;
+console.log(test);
+new MyClass();
+</code></pre>
+<p>If we don&#39;t use other syntax, including the Traceur runtime isn&#39;t necessary. These differences in workflow are described below between these two cases.</p>
+<h2 id="static-workflow-1-running-the-app-in-nodejs">Static Workflow 1: Running the app in NodeJS</h2>
+<p>To run the above in NodeJS, we need to first install Traceur, Google&#39;s ES6 to ES5 JavaScript transpiler. This
+converts the new ES6 module syntax into something existing JavaScript engines can understand.</p>
+<p>To install Traceur, we do:</p>
+<pre><code>  npm install -g traceur
+</code></pre><p>Now that we have Traceur installed, we can run our application directly from the directory root of our project with:</p>
+<pre><code>  traceur app/app
+</code></pre><p>You should then see the incredibly rewarding console output, <code>es6!</code>.</p>
+<p><a name="static-workflow-2"></a></p>
+<h2 id="static-workflow-2-compiling-into-commonjs">Static Workflow 2: Compiling into CommonJS</h2>
+<p>If we want to publish our project to npm or use Browserify, what we can do is transpile our entire application into CommonJS first, and then provide that to users.</p>
+<p>This can be done with the <code>--dir</code> option in Traceur:</p>
+<pre><code>  traceur --dir app app-build --modules=commonjs
+</code></pre><p>The above tells Traceur to run through each ES6 module in the <code>app</code> directory and individually compile it
+into a corresponding CommonJS module in the <code>app-build</code> directory.</p>
+<p>We can now run our entire application with NodeJS directly:</p>
+<pre><code>  node app-build/app
+</code></pre><p>And again we should see the midly tantilising output, <code>es6</code>.</p>
+<h3 id="with-additional-es6-features">With Additional ES6 Features</h3>
+<p>If we had used ES6 classes, or another feature, it isn&#39;t enough to simple run the app.</p>
+<p>Instead we first install Traceur as a local dependency for our project:</p>
+<pre><code>  npm install traceur --save
+</code></pre><p>Then we create a new entry point, <code>index.js</code>, and load the runtime first:</p>
+<pre><code class="lang-javascript">require(&#39;traceur/bin/traceur-runtime&#39;);
+require(&#39;./app-build/app&#39;);
+</code></pre>
+<p><a name="workflow-3"></a></p>
+<h2 id="static-workflow-3-browser-single-file-build">Static Workflow 3: Browser Single File Build</h2>
+<p>So that&#39;s the server, now we want to make this remarkable application work in the browser.</p>
+<p>Traceur makes it very easy to build for the browser with the <code>out</code> option:</p>
+<pre><code>  traceur --out app-build.js app/app
+</code></pre><p>So it will read <code>app/app.js</code>, trace all the module dependencies, and then build them into a single file <code>app-build.js</code>.</p>
+<p>Then we just load this into the browser:</p>
+<pre><code class="lang-html">&lt;!doctype html&gt;
+  &lt;script src=&quot;app-build.js&quot;&gt;&lt;/script&gt;
+</code></pre>
+<p>And we&#39;re done, the text <code>es6</code> appearing in the browser console.</p>
+<h3 id="with-additional-es6-features">With Additional ES6 Features</h3>
+<p><code>traceur-runtime.js</code> works equivalently in the browser. We copy the file from <code>node_modules/traceur/bin/traceur-runtime.js</code> or <a href="https://github.com/google/traceur-compiler">from GitHub</a> (ensuring to use the correct version tag) and then include it
+with a <code>&lt;script&gt;</code> tag before loading anything else.</p>
+<pre><code class="lang-html">&lt;!doctype html&gt;
+  &lt;script src=&quot;traceur-runtime.js&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;app-build.js&quot;&gt;&lt;/script&gt;
+</code></pre>
+<p>We now get our ES6 classes and generators etc. working in the browser.</p>
+<p><a name="static-workflow-4"></a></p>
+<h2 id="static-workflow-4-amd-build">Static Workflow 4: AMD Build</h2>
+<p>The previous workflow assumes that all of our code is in ES6, and that we want to build everything into a single file.</p>
+<p>If using a build tool like the r.js optimizer, one can get more bundling flexibility though.</p>
+<p>In this scenario, we build all our ES6 into AMD, just like we did for CommonJS. Then we can load it with an AMD loader and build with the r.js optimizer.</p>
+<pre><code>  traceur --dir app app-build --modules=amd
+</code></pre><p>The above builds each ES6 module in the <code>app</code> directory individually into a corresponding AMD module in the <code>app-build</code> directory.</p>
+<p>We can now load them with RequireJS (or any AMD loader):</p>
+<pre><code class="lang-html">&lt;!doctype html&gt;
+  &lt;script src=&quot;require.js&quot;&gt;&lt;/script&gt;
+  &lt;script&gt;
+    require([&#39;app-build/app&#39;]);
+  &lt;/sript&gt;
+</code></pre>
+<p>The great thing about this workflow is we can now use ES6 code alongside existing AMD code and get flexibile bundling.</p>
+<h3 id="with-additional-es6-features">With Additional ES6 Features</h3>
+<p>Just like <a href="#workflow-3">workflow 3</a>, this can take advantage of ES6 features by including the Traceur runtime script before requiring the modules.</p>
+<h2 id="dynamic-module-loader">Dynamic Module Loader</h2>
+<p>In the static workflows we saw how to create builds using Traceur that can run in the browser and NodeJS, but the problem with these workflows in the browser
+is that we have no way to load new modules after the initial page load unless we use an AMD loader.</p>
+<p>The ES6 Module Specification defines a <code>System</code> loader for the browser (supported in IE8+, and IE9+ if using additional ES6 features), that we can actually polyfill to behave just like the spec using the
+<a href="https://github.com/ModuleLoader/es6-module-loader">ES6 Module Loader Polyfill</a>, coming to 7.4KB minified and gzipped, suitable for production.</p>
+<p>With some extension libraries, we can make this loader behave just like an AMD loader including support for loading AMD, CommonJS and global scripts as
+well as other features such as map config and plugins.</p>
+<h2 id="dynamic-workflow-1-loading-es6-dynamically-in-the-browser">Dynamic Workflow 1: Loading ES6 Dynamically in the Browser</h2>
+<p>We begin by downloading the ES6 Module Loader polyfill and Traceur (<code>es6-module-loader.js</code>, <code>traceur.js</code> see the <a href="https://github.com/ModuleLoader/es6-module-loader#getting-started">Getting Started section</a> for the links)
+and including them in our page.</p>
+<p>Say we have a directory of ES6 module files <code>app</code> (our same example has <code>app/app</code> and <code>app/module</code> where <code>app/app</code> imports from <code>./module</code>),
+we can import the ES6 and transpile it in the browser dyanmically with:</p>
+<pre><code class="lang-html">&lt;!doctype html&gt;
+  &lt;script src=&quot;traceur.js&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;es6-module-loader.js&quot;&gt;&lt;/script&gt;
+  &lt;script&gt;
+    System.import(&#39;app/app&#39;).then(function(app) {
+      // app is now the Module object with exports as getters
+    });
+  &lt;/script&gt;
+</code></pre>
+<p>The <code>System</code> loader uses ES6 promises to get the module value. Then that is all there is to it. Now the console log statements would match the previous example.</p>
+<p><em>Loading modules separately and transpiling ES6 in the browser is not suitable for production, that is why we have dynamic workflows 2, 3 and 4.</em></p>
+<p><a name="dynamic-workflow-2"></a></p>
+<h2 id="dynamic-workflow-2-loading-with-systemjs">Dynamic Workflow 2: Loading with SystemJS</h2>
+<p>The 4.6KB (minified and gzipped) <a href="https://github.com/systemjs/systemjs">SystemJS loader extension library</a> provides compatibility layers to load any module format (ES6, AMD, CommonJS, global scripts) dynamically in the browser.
+It also comes with map config, and a plugin system like RequireJS as well as various other features.</p>
+<p>To use SystemJS, we include both <code>system.js</code> (see the <a href="https://github.com/systemjs/systemjs#including-the-loader">getting started guide</a> for links) and <code>es6-module-loader.js</code>.</p>
+<p>In this example, we&#39;ll just load an AMD module:</p>
+<p>module.js:</p>
+<pre><code class="lang-javascript">  define(function() {
+    return &#39;This is AMD&#39;;
+  });
+</code></pre>
+<p>We could equally have written a CommonJS or global module, SystemJS detects the format automatically.</p>
+<p>We then load this with:</p>
+<pre><code class="lang-html">&lt;!doctype html&gt;
+  &lt;script src=&quot;es6-module-loader.js&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;system.js&quot;&gt;&lt;/script&gt;
+  &lt;script&gt;
+    System.import(&#39;module&#39;).then(function(module) {
+      console.log(module);
+    });
+  &lt;/script&gt;
+</code></pre>
+<p>In this way, SystemJS can be used as an AMD-style loader.</p>
+<p><a name="dynamic-workflow-3"></a></p>
+<h2 id="dynamic-workflow-3-creating-a-systemjs-bundle-with-traceur">Dynamic Workflow 3: Creating a SystemJS Bundle with Traceur</h2>
+<p>To create a production bundle with Traceur that SystemJS can understand, we can use the <code>modules=instantiate</code> option.</p>
+<p><em>In future this module output will be designed to support circular references, making it the most suitable output for ES6 conversion
+in existing browsers. We&#39;re working on this currently.</em></p>
+<p>This creates a full bundle for all the dependencies of an ES6 module entry point, that will work with SystemJS.</p>
+<p>To create the bundle (using the same two module example):</p>
+<pre><code>  traceur --out app-build.js app/app --modules=instantiate
+</code></pre><p>This creates the file <code>app-build.js</code> from the tree of <code>app/app.js</code>.</p>
+<p>We can then load this bundle after SystemJS and have it populate the module registry correctly.
+If we&#39;ve compiled ES6, we need to also include the Traceur runtime.</p>
+<pre><code class="lang-html">&lt;!doctype html&gt;
+  &lt;!-- only use Traceur runtime if using other ES6 features --&gt;
+  &lt;script src=&quot;traceur-runtime.js&quot;&gt;&lt;/script&gt;
+
+  &lt;script src=&quot;es6-module-loader.js&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;system.js&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;app-build.js&quot;&gt;&lt;/script&gt;
+  &lt;script&gt;
+    System.import(&#39;app/app&#39;);
+  &lt;/script&gt;
+</code></pre>
+<p>Now when the <code>System.import</code> call is made, <code>app/app</code> has already been populated in the module registry cache by the bundle and no XHR requests are created.</p>
+<p><a name="dynamic-workflow-4"></a></p>
+<h2 id="dynamic-workflow-4-creating-custom-bundles-for-all-module-formats">Dynamic Workflow 4: Creating Custom Bundles for all Module Formats</h2>
+<p>This workflow is the most flexible, and the recommended approach for bundling ES6 modules currently.</p>
+<p>The <a href="https://github.com/systemjs/builder">SystemJS Builder</a> project provides a programattic API for creating custom bundles.</p>
+<p>For example, if we have a dependency tree like the following:</p>
+<pre><code>  app
+   - app.js (ES6)
+  lib
+   - jquery.js (AMD)
+   - underscore.js (AMD)
+   - bootstrap.js (global)
+</code></pre><p>Say I want to build everything into a single build file.</p>
+<p>For this I can do:</p>
+<pre><code>  npm install systemjs-builder
+</code></pre><pre><code class="lang-javascript">  builder.build(&#39;app&#39;, {
+    /* SystemJS Configuration Here */
+    baseURL: &#39;app&#39;,
+    paths: ...
+    map: ...
+  }, &#39;buildfile.js&#39;)
+  .then(function() {
+    console.log(&#39;Build complete&#39;);
+  })
+  .catch(function(err) {
+    console.error(err);
+  })
+</code></pre>
+<p>This will trace the <code>app</code> module, with the provided SystemJS configuration, and build all of its dependencies into a single file, <code>buildfile.js</code>.</p>
+<p>There is also an <a href="https://github.com/systemjs/builder#advanced-build">advanced build API</a> for doing custom tree operations such as excluding modules or intersecting shared module trees for tiered bundles.</p>
+<p>This build workflow will respect circular references between AMD, CommonJS and globals, with the correct behaviour as defined by the specification.</p>
+<p>This workflow API is stable, but the exact output format is still being refined as an area of active development (as of July 2014).</p>
+<p>Now we can include this bundle after SystemJS, and have the registry populated correctly:</p>
+<pre><code class="lang-html">&lt;!doctype html&gt;
+  &lt;!-- only use Traceur runtime if using other ES6 features --&gt;
+  &lt;script src=&quot;traceur-runtime.js&quot;&gt;&lt;/script&gt;
+
+  &lt;script src=&quot;es6-module-loader.js&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;system.js&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;buildfile.js&quot;&gt;&lt;/script&gt;
+  &lt;script&gt;
+    System.import(&#39;app/app&#39;);
+  &lt;/script&gt;
+</code></pre>
+<h2 id="summary">Summary</h2>
+<p>For using ES6 modules and module loaders, the general summary would be:</p>
+<ul>
+<li>For existing CommonJS projects, <a href="##static-workflow-2">compile ES6 into CommonJS</a>.</li>
+<li>For existing AMD projects, <a href="#static-workflow-4">compile ES6 into AMD</a>.</li>
+<li>New ES6 projects can use dynamic ES6 module loaders that load multiple module formats, like the <a href="https://github.com/systemjs/systemjs">SystemJS loader</a>.</li>
+<li>It is possible to upgrade an AMD project to use the <a href="#dynamic-workflow-2">SystemJS loader</a>, which will support loading AMD as well as ES6,
+and then use that with ES6 modules compiled into AMD for production.</li>
+<li>The <a href="#dynamic-workflow-3">Traceur <code>instantiate</code> output</a> is a specially designed ES6 compile target that will soon support circular
+references. Bundling techniques to work alongside this output are the current focus of active development for new ES6 build workflows.</li>
+</ul>
+<h2 id="feedback">Feedback</h2>
+<p>Feedback on these workflows is very welcome. Feel free to leave a comment, or get involved in the issue queues of the appropriate projects.</p>
+<ul>
+<li><a href="https://github.com/google/traceur-compiler">Traceur</a></li>
+<li><a href="https://github.com/ModuleLoader/es6-module-loader">ES6 Module Loader polyfill</a></li>
+<li><a href="https://github.com/systemjs/systemjs">SystemJS</a></li>
+</ul>
+
+        </div>
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+          var disqus_shortname = 'guybedford';
+          (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+        </script>
+      </div>
+
+    <div class="push"></div>
+  </div>
+  <div class="footer">
+    <div class="blocks"><div class="align">
+      <div class="block"><div class="content">
+        <h2>About</h2>
+        <p>I'm a software engineer and open source contributor, currently working on <a href="http://jspm.io/">jspm.io</a> and <a href="https://github.com/systemjs/systemjs">SystemJS</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Work</h2>
+        <p>I'm available for consulting work. Project support is welcome. My Bitcoin address is <a href="bitcoin:1DTWgHqLzZJhkqFkR1aqwCQiAMYeR9GV2W">1DTWgHqLzZJhkqFkR1aqwCQiAMYeR9GV2W</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Contact</h2>
+        <p>Contact me via email (@gmail.com), the <a href="https://gitter.im/jspm/jspm">jspm gitter room</a>,
+        on <a href="https://twitter.com/guybedford">Twitter</a>, <a href="https://github.com/guybedford">GitHub</a> or <a href="http://za.linkedin.com/in/guybedford">LinkedIn</a>.
+    </div></div>
+  </div>
+  <script>
+    Array.prototype.forEach.call(document.querySelectorAll('code.javascript, code.lang-javascript, code.html, code.lang-html'), function(code) {
+      code.innerHTML = code.innerHTML
+        .replace(/\/\/(.*)/gm, '<span class="comment">//$1</span>')
+        .replace(/('[^']*')/gm, '<span class="string">$1</span>')
+        .replace(/([^#\d])(\d+)/gm, '$1<span class="number">$2</span>')
+        .replace(/([^\.])(for|function|new|throw|return|var|if|else|true|false|this|import|export class|export|from)\b/gm, '$1<span class="keyword">$2</span>');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('a'), function(a) {
+      if ((a.getAttribute('href') || '#').substr(0, 1) != '#' && !a.getAttribute('target'))
+        a.setAttribute('target', '_blank');
+    });
+  </script>
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-16744385-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+</body>
+</html>
