@@ -30,10 +30,8 @@
           </ul>
           <p>On top of these builds, <a href="https://github.com/systemjs/systemjs/blob/2.0.0/README.md#extras">pluggable extras</a> can be dropped in for additional functionality including AMD support, named exports support for legacy modules and source transform support for in-browser Babel compilation.</p>
           <p>Both loaders support IE11+ provided a Promise polyfill is available.</p>
-          <h2 class="mume-header" id="towards-a-stable-20-release">Towards a Stable 2.0 Release</h2>
-
           <p>Many of the previous features of SystemJS 0.21 should be possible to implement within the extras and extensions model of SystemJS 2.0. If you are interested in a specific feature here, please share your work by listing your extensions in the README of the project. In addition we can integrate whatever extras turn out to be the most useful for the community. This final set of extras, and what can be done through loader extensibility, is up to you.</p>
-          <p><em>SystemJS 0.21 will continue to be maintained, and will be in the long-term. There is no pressing need to upgrade. The stable release of 2.0 will still be a while as all the workflows are properly tested and refined.</em></p>
+          <p><em>SystemJS 0.21 will continue to be maintained, and will be in the long-term. There is no pressing need to upgrade.</em></p>
           <h2 class="mume-header" id="systemjs-20-goals">SystemJS 2.0 Goals</h2>
 
           <p>The <a href="http://www.guybedford.com/systemjs-alignment">SystemJS 0.20 release</a> was a first-step towards better-aligning with native modules in browsers, but it still maintained the shell of the <a href="https://github.com/ModuleLoader/es-module-loader">WhatWG Module Loader</a> API.</p>
@@ -57,7 +55,7 @@
           <h4 class="mume-header" id="package-name-maps">Package Name Maps</h4>
 
           <p>Most of the features of the previous SystemJS map configuration are still supported in package maps - for example there is support for both base-level mappings as well as scoped mappings, and <code>baseURL</code> becomes the package map <code>path_prefix</code>.</p>
-          <p>Package name maps are an early spec draft and will still change before their implemention in browsers. Depending on how this process goes, these changes may be integrated during the release process towards the 2.0 stable SystemJS release, or alternatively staggered through the 3.0 release.</p>
+          <p>Package name maps are an early spec draft and will still change before their implemention in browsers.</p>
           <p><a href="https://github.com/systemjs/systemjs/blob/2.0.0/docs/package-name-maps.md">Read more about the SystemJS package maps implementation here</a>.</p>
           <h4 class="mume-header" id="web-assembly-integration">Web Assembly Integration</h4>
 
@@ -82,8 +80,7 @@
           <p>If you disagree with any of these directions, please do share your thoughts or implementation work - nothing here is set in stone at this point. Many of these features could still be integrated as extras or extensions.</p>
           <h2 class="mume-header" id="roadmap">Roadmap</h2>
 
-          <p>The priority now is to gather implementation feedback for refining the workflows and features, padding out needed features and extras based on this feedback and demand before the stable 2.0 release.</p>
-          <p>Once 2.0 has released as stable, going forward, s.js will continue to remain a minimal optimal loader, while system.js will continue to track the latest module specification progress, using the extras model for early experimental work, moving this work into core builds on major release milestones.</p>
+          <p>Going forward, s.js will continue to remain a minimal optimal loader, while system.js will continue to track the latest module specification progress, using the extras model for early experimental work, moving this work into core builds on major release milestones.</p>
           <p>All other features can be supported through core extras or ecosystem extensions, and the hope is to better showcase community projects here.</p>
           <p>Eventually though, once browser support for modules is strong enough, the optimized s.js loader should no longer be necessary. New techniques, like <a href="https://github.com/guybedford/packagemap-polyfill">polyfilling package maps on native modules</a>, or similarly for whatever new module workflows we have in future, will take its place.</p>
           <p>SystemJS still aims to facilitate loading any modular package dynamically in the browser. The new <a href="https://jspm.io/">jspm.io</a> CDN supports loading any package from npm. Using the s.js build, <code>System.import('//system-dev.jspm.io/[pkgName]')</code> will load any package on-demand with Browserify-style compatibility. In the short time since it has been released this CDN is already serving 2 million users per month. Tentative work is still in progress on a jspm 2.0 to bring these same workflows available locally so that such CDN workflows can remain complementary and in alignment with a wider overall development workflow.</p>
