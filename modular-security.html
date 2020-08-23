@@ -47,11 +47,11 @@
 <a name="model"></a>
 <h2><a href="#model">#</a>Model</h2>
 
-<p>The gist of the SES (<a rel=noopener target=_blank href="https://github.com/Agoric/ses-shim">Secure ECMAScript</a>) mode, as proposed by Agoric, is something like the following:
+<p>The gist of the SES (<a rel=noopener target=_blank href="https://github.com/Agoric/ses-shim">Secure ECMAScript</a>) model, as proposed by Agoric, is something like the following:
 
 <ol>
   <li>All capabilities are imported through the module system (<code>import fetch from 'fetch'</code> kind of thing) - <strong>the module resolver acts as the security enforcer</strong>.</li>
-  <li>The consequence of (1) is that <em>all global capabilities should be disabled</em></li>
+  <li>The consequence of (1) is that <em>all global capabilities should be disabled.</em></li>
   <li>JavaScript needs a whole bunch of patching to prevent prototype mutations and unintentional side channels such as <code>return { toString() {} }</code> object hooks. You have to manage package interfaces very carefully and freeze the entire global object from prototype mutation.</li>
 </ol>
 
@@ -80,15 +80,15 @@ contained in other code in the same process. Think passwords, secure tokens, etc
 
 <p>Finally, in terms of genuine Spectre mitigations as opposed to just skirting the concerns above, Cloudflare have this same problem for their same-process deployment of Cloudflare Workers, which they recently discussed here - <a rel=noopener target=_blank href="https://blog.cloudflare.com/mitigating-spectre-and-other-security-threats-the-cloudflare-workers-security-model/">Mitigating Spectre and Other Security Threats: The Cloudflare Workers Security Model</a><div class="">
 
-<p>The gist of their mitigations is summarized at the end, and involves:
+<p>Their mitigations are summarized at the end, and roughly involve:
 
 <ul>
 <li>Restricting Date.now() and multi-threading via new Worker (which allows custom timer creation) to attempt to disable the time measurements necessary to initiate the attack.
 <li>Proactively detecting the attack behaviour based on monitoring and initiating full isolation.
 <li>Exploring memory shuffling techniques so that secret information does not remain static.
-</li>
+</ul>
 
-<p>As they say, this is an active mitigation space that can continue to be developed. In theory, these similar mitigations could apply to new runtime development as well.
+<p>As they mention, this is an active mitigation space that can continue to be developed. In theory, these similar mitigations could apply to new runtime development as well.
 
 <p>The important thing to note is that these mitigation techniques do not apply to the Web platform at all as they are simply not possible (at least not without <a rel=noopener target=_blank href="https://github.com/tc39/proposal-realms">Realms</a>). The Google / v8 position completely makes sense given this angle,
   but the focus I want to make is on <strong>new JavaScript runtimes</strong>, like succesors to Node.js such as Deno and others, <em>which should be exploring these security properties today</em>.
