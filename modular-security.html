@@ -1,0 +1,236 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>Modular Security</title>
+  <meta name="description" content="Modular security proposal for JavaScript-based runtimes">
+  <meta name="viewport" content="width=device-width">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+      <div class="article">
+        <a class="back" href="/" target="_self">&laquo;</a>
+        <div class="article-header">
+          <h1 class="title">Modular Security</h1>
+          <div class="meta">
+            <span class="author">Guy Bedford</span>
+            &sdot;
+            <span class="date">23 August 2020</span>
+          </div>
+          <div class="clear"></div>
+        </div>
+        <div class="article-body">
+<p>I recently posted the following Tweet with regards to the current state of the third-party security problem in JavaScript:
+
+<blockquote class="twitter-tweet"><p lang="en" dir="ltr">Having worked on and followed modules standards from TC39 and WhatWG to Node.js, it&#39;s so so clear that security was, is, and always will be an afterthought.<br><br>Where are the secure-by-default open platform developments? Crypto is the only community I see doing it.</p>&mdash; Guy Bedford (@guybedford) <a href="https://twitter.com/guybedford/status/1296935308445900801?ref_src=twsrc%5Etfw">August 21, 2020</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+<p>The underlying issue is the <strong>npm install</strong> one - as the registry and our dependence on it continues to grow, we are build more and more automated tooling to reduce the friction of
+  adoption, the security gap here leaves a huge pressure on the entire ecosystem.
+
+<p>Already, this can start to be felt in terms of security advisories for freely maintained open source projects causing more maintainer pressures. People giving up their time freely are now in a position where they are obliged to
+  respond to regular security vulnerabilities in their packages which may or may not be genuine escalations of privilege. We engage in security theatre to create the illusion of safety, and yet all the while everything remains unsecure.
+  It is far too easy for me as a maintainer to hack you since you run my code that you haven't read line for line.
+
+<p>The defeatest position is that this is just the way things have to be. But it's important to remember that despite all the cruft; trust, good code and agents of creation with good intentions, while increasingly rare as capitalism continues to morph into its weird technological shapes, do exist. The idea then,
+  is to trust the few with a little, and the rest with much less.
+
+<p>The common response from anyone working on Chrome or v8, is that this simply isn't possible:
+
+<blockquote class="twitter-tweet"><p lang="en" dir="ltr">how is this possible post spectre</p>&mdash; Sathya Gunasekaran (@_gsathya) <a href="https://twitter.com/_gsathya/status/1297121933004353536?ref_src=twsrc%5Etfw">August 22, 2020</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+<p>Now I admit I have full consumed the kool aid of the OCap and SES models and the ideas shared by Mark Miller (the representative for Agoric at TC39). I even gave a session on these concepts at the Node.js Collaboration summit, where for example I direct address Spectre.
+
+<p>But, an idea so attractive as modular security should be fully disproven if we are to abandon it. And while it hasn't been comprehensively disproven, we do not do justice to the development of the platform to not fully explore it as a possibility (or to comprehensively disprove it).
+
+<a name="model"></a>
+<h2><a href="#model">#</a>Model</h2>
+
+<p>The gist of the SES (<a rel=noopener target=_blank href="https://github.com/Agoric/ses-shim">Secure ECMAScript</a>) mode, as proposed by Agoric, is something like the following:
+
+<ol>
+  <li>All capabilities are imported through the module system (<code>import fetch from 'fetch'</code> kind of thing) - <strong>the module resolver acts as the security enforcer</strong>.</li>
+  <li>The consequence of (1) is that <em>all global capabilities should be disabled</em></li>
+  <li>JavaScript needs a whole bunch of patching to prevent prototype mutations and unintentional side channels such as <code>return { toString() {} }</code> object hooks. You have to manage package interfaces very carefully and freeze the entire global object from prototype mutation.</li>
+</ol>
+
+<p>See the talk by Mark Miller on <a rel=noopener target=_blank href="https://www.youtube.com/watch?v=9WdbTucMaRo">Extremely Modular Distributed JavaScript</a>, or my presentation from the Node.js Collaboration Summit,
+<a rel=noopener target=_blank href="https://docs.google.com/presentation/d/1VUpxoxitZCINJI7jXec4i87YiYZsXr8pCSHdHY5pW30/edit?usp=sharing">Security, Modules and Node.js</a>, for a more in-depth coverage of the full model.
+
+<p>The result of this model is in theory the ability to run less trusted code. The date time library you npm install cannot install a trojan horse on your computer sort of thing, which seems a pretty useful property to have in my opinion.
+
+<p>Towards (3) we already <a rel=noopener href="https://nodejs.org/dist/latest-v14.x/docs/api/cli.html#cli_frozen_intrinsics">shipped the `--frozen-intrinsics` flag in Node.js</a>. (1) and (2) clearly require new secure JavaScript runtime development though.</p>
+
+<a name="criticisms-difficulties"></a>
+<h2><a href="#criticisms">#</a>Criticisms and Difficulties</h2>
+
+<a name="spectre"></a>
+<h3><a href="#spectre">#</a>Spectre</h3>
+
+<p>As mentioned the primary criticism is always Spectre. Spectre class of attacks mean that code running on the same process can use CPU reverse engineering and timing information to read secret information
+contained in other code in the same process. Think passwords, secure tokens, etc.
+
+<p>The first thing to note is that Spectre is the ability to steal secrets not the ability to install a trojan horse on your computer. Even if we never solve Spectre, my first argument is that stopping code from being able to perform
+  destructive operations or having access to destructive capabilities is still a win. You might have your wallet stolen, but you can replace your credit cards and no one can set fire to your house! And what we are comparing this against is having no security for third-party libraries at all.
+
+<p>The second thing to note here is that if you have a true capability system and can carefully control network access, then the capability to exfiltrate (basically to use <code>fetch</code>), can itself be treated as a critical permission. Secrets might be discovered but not as easily shared.
+
+<p>The counter argument to controlling the capability to exfiltrate are that there are always side channels to be found - the blinking of a light through whatever complex window to share the information of the secret token.
+
+<p>Finally, in terms of genuine Spectre mitigations as opposed to just skirting the concerns above, Cloudflare have this same problem for their same-process deployment of Cloudflare Workers, which they recently discussed here - <a rel=noopener target=_blank href="https://blog.cloudflare.com/mitigating-spectre-and-other-security-threats-the-cloudflare-workers-security-model/">Mitigating Spectre and Other Security Threats: The Cloudflare Workers Security Model</a><div class="">
+
+<p>The gist of their mitigations is summarized at the end, and involves:
+
+<ul>
+<li>Restricting Date.now() and multi-threading via new Worker (which allows custom timer creation) to attempt to disable the time measurements necessary to initiate the attack.
+<li>Proactively detecting the attack behaviour based on monitoring and initiating full isolation.
+<li>Exploring memory shuffling techniques so that secret information does not remain static.
+</li>
+
+<p>As they say, this is an active mitigation space that can continue to be developed. In theory, these similar mitigations could apply to new runtime development as well.
+
+<p>The important thing to note is that these mitigation techniques do not apply to the Web platform at all as they are simply not possible (at least not without <a rel=noopener target=_blank href="https://github.com/tc39/proposal-realms">Realms</a>). The Google / v8 position completely makes sense given this angle,
+  but the focus I want to make is on <strong>new JavaScript runtimes</strong>, like succesors to Node.js such as Deno and others, <em>which should be exploring these security properties today</em>.
+
+<a name="insecure-module-interfaces"></a>
+<h3><a href="#insecure-module-interfaces">#</a>Insecure Module Interfaces</h3>
+
+<p>The next major problem though comes down to the complex interface boundary between third-party packages. For example, consider the following code:
+
+<pre><code class="lang-javascript">
+import { renderer } from 'renderer';
+import { renderGraph } from 'graph';
+import { renderTitle } from 'title';
+
+renderer.render([renderGraph, renderTitle]);
+</code></pre>
+
+<p>In theory, <code>renderGraph</code> doesn't need any other capabilities other than the ability to call into the renderer so it can be treated as low-trust code.
+
+<p>But now consider a malicious implementation of <code>renderGraph</code>:
+
+<pre><code class="lang-javascript">
+export function renderGraph () {
+  this[1].setTitle('Changed the title');
+}
+</code></pre>
+
+<p><code>renderGraph</code> knows the renderer will call it via <code>renderArray[i]()</code>, which in JavaScript will set the <code>this</code> binding to the array itself, thus giving access to the title component from the graph component.</p>
+
+<p>It's a somewhat contrived example, but it demonstrates how easily you can get capability spillage in JavaScript, and that's before we even get to information spillage eg via <code>toString()</code>.</p>
+
+<p>Locking down these sorts of inadvertant side channels means making all package interfaces out of <code>SafeFunction</code> and <code>SafeObject</code> objects that don't have these sorts of terrible flaws, and it's not an easy problem to solve - this is where the bulk of the effort needs to be made.</p>
+
+<p>The other side of this to consider is that Web Assembly module interfaces don't have these same sorts of capability and information spillage we have in JavaScript, which certainly gives hope for future ecosystems on this problem.</p>
+
+<a name="impractical-constraints"></a>
+<h3><a href="#impractical-constraints">#</a>Impractical Constraints</h3>
+
+<p>The last argument is that all of the above are simply too much of a constraint on code and ecosystems. That there exists no path from what we have today to this kind of secure ecosystem. As a result it will always be a fringe system
+  with low adoption.
+
+<p>This I believe is the most crucial issue to solve. Security means nothing if no one adopts it.
+
+<a name="proposal"></a>
+<h2><a href="#proposal">#</a>Proposal</h2>
+
+<p>So I'd like to propose a hypothetical runtime for JavaScript as a thought experiment, and to invite scrutiny as to whether this solves the following problems:
+
+<ul>
+<li>That this runtime provides a safer restriction of low-level capabilities and information for third-party code running in the same process than we have in Node.js or Deno today.
+<li>That this runtime can support an onramp from the existing JavaScript ecosystem, which is crucial to widespread adoption.
+<ul>
+
+<p>The form of the runtime is a direct consolidation of all of the above discussed:
+
+<ul>
+  <li>The global object should have no capabilities, only intrinsics, with all intrinsics provided as safe intrinsics. <code>Date.now()</code> and <code>new Worker</code> should not exist unless imported explicitly / handled via some explicit capability.
+  <li>The permissions model should be based on package-level import permissions which are configured on a per-package basis.
+  <li>The interfaces between all packages should use <code>SafeObject</code>, <code>SafeFunction</code> and <code>SafeClass</code> implementations - a careful language subset for communication that the module system itself verifies packages are adhering to.
+  <li>The existing npm ecosystem should be supported via codemods that can run 90%+ of existing code within this new secure model.
+</ul>
+
+<p>The a package export bindings contained an insecure JavaScript object, the entire runtime would reject its execution.
+
+<p>Codemods would be designed that could use type inference to convert the outwardly facing components of existing packages to this safe form eg:
+
+<pre><code class="lang-javascript">
+export function renderGraph () {
+  this[1].setTitle('Changed the title');
+}
+</code></pre>
+
+<p>would be converted into:
+
+<pre><code class="lang-javascript">
+export function SafeFunction(renderGraph () {
+  this[1].setTitle('Changed the title');
+})
+</code></pre>
+
+<p>where the <code>SafeFunction</code> implementation would ensure no rebinding of <code>this</code> by callers. All capability references would thus be made fully explicit to the sofware creator. Advisories are still necessary, but within a well-defined and constrained permissions model that clearly defines what an escalation really means.
+
+<a name="alternatives">
+<h2><a href="#alternatives">#</a>Alternatives</h2>
+
+<p>As far as I can tell the only alternative to handling third-party security comes down to continuing to rely on security advisories, and improving the process of advisory detection, mitigation and handling.
+
+<p>If this really is our best bet, then there is a lot more work to be done here to improve this process, eg automatically detecting prototype mutations in JavaScript and to automatically fix them. To have standard
+  tools that can formally verify the security of third-party JavaScript code.
+
+<p>Personally I just want to work on these problems as it seems it is our responsibility at this point, in whatever form would provide the greatest benefit.
+
+<p>And if safe package interfaces are truly not practical or possible for JavaScript, then moving these ideas into the Wasm side of things and ensuring we can start to obtain these properties for future Wasm runtimes would be worthwhile too, and something that should be started now, not added later.
+        </div>
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+          var disqus_shortname = 'guybedford';
+          (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+        </script>
+      </div>
+
+    <div class="push"></div>
+  </div>
+  <div class="footer">
+    <div class="blocks"><div class="align">
+      <div class="block"><div class="content">
+        <h2>About</h2>
+        <p>I'm a software engineer and open source contributor, currently working on <a href="http://jspm.io/">jspm.io</a> and <a href="https://github.com/systemjs/systemjs">SystemJS</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Work</h2>
+        <p>I'm available for consulting work. Support or sponsorships of my projects is always welcome, feel free to get in touch.
+      </div></div><div class="block"><div class="content">
+        <h2>Contact</h2>
+        <p>Contact me via email (@gmail.com), on <a href="https://twitter.com/guybedford">Twitter</a>, <a href="https://github.com/guybedford">GitHub</a> or <a href="http://za.linkedin.com/in/guybedford">LinkedIn</a>.
+    </div></div>
+  </div>
+  <script>
+    Array.prototype.forEach.call(document.querySelectorAll('code.javascript, code.lang-javascript, code.html, code.lang-html'), function(code) {
+      code.innerHTML = code.innerHTML
+        .replace(/\/\/(.*)/gm, '<span class="comment">//$1</span>')
+        .replace(/('[^']*')/gm, '<span class="string">$1</span>')
+        .replace(/([^#\d])(\d+)/gm, '$1<span class="number">$2</span>')
+        .replace(/([^\.])(for|function|new|throw|return|var|if|else|true|false|this|import|export class|export|from)\b/gm, '$1<span class="keyword">$2</span>');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('a'), function(a) {
+      if ((a.getAttribute('href') || '#').substr(0, 1) != '#' && !a.getAttribute('target'))
+        a.setAttribute('target', '_blank');
+    });
+  </script>
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-16744385-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+</body>
+</html>
