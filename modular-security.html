@@ -151,7 +151,7 @@ export function renderGraph () {
   <li>The existing npm ecosystem should be supported via codemods that can run 90%+ of existing code within this new secure model.
 </ul>
 
-<p>The a package export bindings contained an insecure JavaScript object, the entire runtime would reject its execution.
+<p>In terms of the package interfaces,  package export bindings would be required to use the safe interface system. A package with export bindings using eg an insecure JavaScript object would be rejected by the runtime.
 
 <p>Codemods would be designed that could use type inference to convert the outwardly facing components of existing packages to this safe form eg:
 
@@ -170,6 +170,30 @@ export function SafeFunction(renderGraph () {
 </code></pre>
 
 <p>where the <code>SafeFunction</code> implementation would ensure no rebinding of <code>this</code> by callers. All capability references would thus be made fully explicit to the sofware creator. Advisories are still necessary, but within a well-defined and constrained permissions model that clearly defines what an escalation really means.
+
+<p>These runtime package interfaces continue to pose the greatest challenge - they should be easy to author and maintain, which doesn't seem like it would have a simple story for JavaScript unfortunately.
+
+<p>Perhaps some really nice-looking syntax (using globals, as it is fine to use globals here), would help soften the cost here:
+
+<pre><code class="lang-javascript">
+export Fn(() => {
+  // Runtime throw -> Unsafe object returned
+  return {};
+  // Correct -> Safe interface!
+  return Obj({ safe: 'object' });
+});
+
+export Obj({
+  safe: 'object'
+});
+
+export Class(class MyClass {
+});
+</code></pre>
+
+<p>Such that it can start to feel like a natural paradigm for a runtime that can compete with the likes of Deno and Node.js.
+
+<p>The codemods are really key though to supporting existing code. And if this feels like setting the bar too high, note that we already codemod all npm code to run it in the browser in the first place with our build tooling, and this is also what jspm does today to support browser imports.
 
 <a name="alternatives">
 <h2><a href="#alternatives">#</a>Alternatives</h2>
