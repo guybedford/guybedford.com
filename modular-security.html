@@ -40,7 +40,7 @@
 
 <blockquote class="twitter-tweet"><p lang="en" dir="ltr">how is this possible post spectre</p>&mdash; Sathya Gunasekaran (@_gsathya) <a href="https://twitter.com/_gsathya/status/1297121933004353536?ref_src=twsrc%5Etfw">August 22, 2020</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-<p>Now I admit I have full consumed the kool aid of the OCap and SES models and the ideas shared by Mark Miller (the representative for Agoric at TC39). I even gave a session on these concepts at the Node.js Collaboration summit, where for example I direct address Spectre.
+<p>Now I admit I have fullly consumed the kool-aid of the OCap and SES models and the ideas shared by Mark Miller (the representative for Agoric at TC39). I even gave a session on these concepts at the Node.js Collaboration summit, where for example I direct address Spectre.
 
 <p>But, an idea so attractive as modular security should be fully disproven if we are to abandon it. And while it hasn't been comprehensively disproven, we do not do justice to the development of the platform to not fully explore it as a possibility (or to comprehensively disprove it).
 
@@ -68,8 +68,8 @@
 <a name="spectre"></a>
 <h3><a href="#spectre">#</a>Spectre</h3>
 
-<p>As mentioned the primary criticism is always Spectre. Spectre class of attacks mean that code running on the same process can use CPU reverse engineering and timing information to read secret information
-contained in other code in the same process. Think passwords, secure tokens, etc.
+<p>As mentioned the primary criticism is Spectre. The Spectre class of attacks mean that code running on the same process can use CPU reverse engineering and timing information to read secret information
+used by other separate code in the same process. Think passwords, secure tokens, etc.
 
 <p>The first thing to note is that Spectre is the ability to steal secrets not the ability to install a trojan horse on your computer. Even if we never solve Spectre, my first argument is that stopping code from being able to perform
   destructive operations or having access to destructive capabilities is still a win. You might have your wallet stolen, but you can replace your credit cards and no one can set fire to your house! And what we are comparing this against is having no security for third-party libraries at all.
@@ -191,7 +191,7 @@ export Class(class MyClass {
 });
 </code></pre>
 
-<p>Such that it can start to feel like a natural paradigm for a runtime that can compete with the likes of Deno and Node.js.
+<p>Such that it can start to feel like a natural paradigm for a runtime that can compete with the likes of Deno and Node.js. I believe Salesforce have also been exploring using proxies as another way to managing these "membranes" in a safe way.
 
 <p>The codemods are really key though to supporting existing code. And if this feels like setting the bar too high, note that we already codemod all npm code to run it in the browser in the first place with our build tooling, and this is also what jspm does today to support browser imports.
 
