@@ -118,7 +118,7 @@ export function renderGraph () {
 
 <p><code>renderGraph</code> knows the renderer will call it via <code>renderArray[i]()</code>, which in JavaScript will set the <code>this</code> binding to the array itself, thus giving access to the title component from the graph component.</p>
 
-<p>It's a somewhat contrived example, but it demonstrates how easily you can get capability spillage in JavaScript, and that's before we even get to information spillage eg via <code>toString()</code>.</p>
+<p>Yes it's a contrived example, but it demonstrates how easily you can get capability spillage in JavaScript, and that's before we even get to information spillage eg via <code>toString()</code>.</p>
 
 <p>Locking down these sorts of inadvertant side channels means making all package interfaces out of <code>SafeFunction</code> and <code>SafeObject</code> objects that don't have these sorts of terrible flaws, and it's not an easy problem to solve - this is where the bulk of the effort needs to be made.</p>
 
@@ -140,7 +140,7 @@ export function renderGraph () {
 <ul>
 <li>That this runtime provides a safer restriction of low-level capabilities and information for third-party code running in the same process than we have in Node.js or Deno today.
 <li>That this runtime can support an onramp from the existing JavaScript ecosystem, which is crucial to widespread adoption.
-<ul>
+</ul>
 
 <p>The form of the runtime is a direct consolidation of all of the above discussed:
 
