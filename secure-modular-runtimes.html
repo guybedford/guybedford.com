@@ -203,7 +203,7 @@ export function renderGraph () {
 }
 </code></pre>
 
-<p>The capability information is already naturally defined in the import map - that is, it is redundant information. Again, on the other side, Node.js Policies <a target=_blank rel=noopener href="https://nodejs.org/dist/latest-v14.x/docs/api/policy.html#policy_dependency_redirection">look awfully like an import map</a>.
+<p>The capability information is already naturally defined in the import map - that is, it is redundant information. Again, on the other side, Node.js Policies <a target=_blank rel=noopener href="https://nodejs.org/dist/latest-v14.x/docs/api/policy.html#policy_dependency_redirection">look a lot like an import map</a>.
 
 <p>The changes to import maps to support this are very minor and can be done as an extension proposal:
 
@@ -213,7 +213,7 @@ export function renderGraph () {
   <li>Disable scope fallbacks from applying.
 </ol>
 
-<p>With these small tweaks we have the potential to turn import maps into the primary modular workflow for application development that is easily auditable, readable and manageable, where security is built in from the start.
+<p>With these small tweaks we have the potential to turn import maps into the primary modular workflow for application development that is easily auditable, readable and manageable, and where capability definitions are built in from the start.
 
 <p><strong>Getting this simple idea across is one of my primary reason for writing this post and opening these discussions.</strong>
 
