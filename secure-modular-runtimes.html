@@ -108,8 +108,7 @@ used by other separate code in the same process. Think - passwords, secure token
 
 <p>The next major problem comes down to the complex interface boundary between third-party packages. For example, consider the following code:
 
-<pre><code class="lang-javascript">
-import { renderer } from 'renderer';
+<pre><code class="lang-javascript">import { renderer } from 'renderer';
 import { renderGraph } from 'graph';
 import { renderTitle } from 'title';
 
@@ -120,8 +119,7 @@ renderer.render([renderGraph, renderTitle]);
 
 <p>But now consider a malicious implementation of <code>renderGraph</code>:
 
-<pre><code class="lang-javascript">
-export function renderGraph () {
+<pre><code class="lang-javascript">export function renderGraph () {
   this[1].setTitle('Changed the title');
 }
 </code></pre>
@@ -174,8 +172,7 @@ export function renderGraph () {
 
 <p>The idea is that in a capabilities model, you end up defining permissions something like:
 
-<pre><code class="lang-javascript">
-{
+<pre><code class="lang-javascript">{
   "packageA": {
     "capabilities": ["packageB"]
   },
@@ -189,8 +186,7 @@ export function renderGraph () {
 
 <p>Yet, the import map for this same application looks something like:
 
-<pre><code class="lang-javascript">
-{
+<pre><code class="lang-javascript">{
   "imports": {
     "packageA": "/path/to/packageA/main.js"
   },
@@ -226,16 +222,14 @@ export function renderGraph () {
 
 <p>Codemods could be designed to convert the outwardly facing components of existing packages to this safe form, for example:
 
-<pre><code class="lang-javascript">
-export function renderGraph () {
+<pre><code class="lang-javascript">export function renderGraph () {
   this[1].setTitle('Changed the title');
 }
 </code></pre>
 
 <p>would be converted into:
 
-<pre><code class="lang-javascript">
-export function SafeFunction(renderGraph () {
+<pre><code class="lang-javascript">export function SafeFunction(renderGraph () {
   this[1].setTitle('Changed the title');
 })
 </code></pre>
@@ -262,16 +256,14 @@ export function SafeFunction(renderGraph () {
 
 <p>Using codemods third-party packages can be converted into a form to be exected in the secure runtime. This isn't easy but it should be possible in over 90% of cases to provide ecosystem compatibility. For example:
 
-<pre><code class="lang-javascript">
-export async function getCurrentResource () {
+<pre><code class="lang-javascript">export async function getCurrentResource () {
   return fetch(`${globalThis.resourceUrl}/${Date.now()}`);
 }
 </code></pre>
 
 <p>can be converted into:</p>
 
-<pre><code class="lang-javascript">
-import fetch from 'fetch';
+<pre><code class="lang-javascript">import fetch from 'fetch';
 import { now } from 'date';
 export Fn(async getCurrentResource () => {
   return fetch(`${import.meta.local.resourceUrl}/${now()}`);
