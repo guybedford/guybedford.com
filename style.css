@@ -152,7 +152,7 @@ pre {
   border-radius: 5px;
   border: 1px solid #e0e0e0;
   color: #444;
-  overflow-x: scroll;
+  overflow-x: auto;
   padding: 20px;
 }
 code {
