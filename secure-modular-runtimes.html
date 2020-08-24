@@ -56,7 +56,7 @@
 <p>The gist of the SES (<a rel=noopener target=_blank href="https://github.com/Agoric/ses-shim">Secure ECMAScript</a>) model, as proposed by Agoric, is something like the following:
 
 <ol>
-  <li>All capabilities are imported through the module system (<code>import fetch from 'fetch'</code> kind of thing) - <em>the module resolver acts as the security enforcer</em>.</li>
+  <li>All capabilities are imported through the module system (<code>import fetch from 'fetch'</code> kind of thing) - <em>the module resolver acts as the capability system, enforcing permissions</em>.</li>
   <li>The consequence of (1) is that <em>all global capabilities should be disabled / carefully controlled.</em></li>
   <li>JavaScript needs a whole bunch of patching to prevent prototype mutations and unintentional side channels such as <code>return { toString() {} }</code> object hooks. You have to manage package interfaces very carefully and freeze the entire global object from prototype mutation.</li>
 </ol>
