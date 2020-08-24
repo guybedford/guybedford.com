@@ -218,7 +218,7 @@ export function renderGraph () {
 <a name="package-interfaces"></a>
 <h2><a href="#package-interfaces">#</a>Package Interfaces</h2>
 
-<p>In terms of the package interfaces, the exported package bindings (eg Node.js "main" / <a rel=noopener target=_blank href="https://nodejs.org/dist/latest-v14.x/docs/api/esm.html#esm_package_entry_points">"exports" field module exports</a>) would be required to use the safe interface system. A package with export bindings using an insecure JavaScript object would be rejected by the runtime.
+<p>In terms of the package interfaces, the exported package bindings (eg Node.js "main" / <a rel=noopener target=_blank href="https://nodejs.org/dist/latest-v14.x/docs/api/esm.html#esm_package_entry_points">"exports" field module exports</a>) would use the safe interface system.
 
 <p>Codemods could be designed to convert the outwardly facing components of existing packages to this safe form, for example:
 
