@@ -1,8 +1,8 @@
 <!doctype html>
 <head>
   <meta charset="utf-8">
-  <title>Modular Security</title>
-  <meta name="description" content="Modular security proposal for JavaScript-based runtimes">
+  <title>Secure Modular Runtimes</title>
+  <meta name="description" content="Proposal for a Secure Modular JavaScript-based runtime">
   <meta name="viewport" content="width=device-width">
 
   <link rel="stylesheet" href="style.css">
@@ -13,7 +13,7 @@
       <div class="article">
         <a class="back" href="/" target="_self">&laquo;</a>
         <div class="article-header">
-          <h1 class="title">Modular Security</h1>
+          <h1 class="title">Secure Modular Runtimes</h1>
           <div class="meta">
             <span class="author">Guy Bedford</span>
             &sdot;
@@ -22,63 +22,73 @@
           <div class="clear"></div>
         </div>
         <div class="article-body">
-<p>I recently posted the following Tweet with regards to the current state of the third-party security problem in JavaScript:
+<p>I recently posted the following Tweet with regards to the current state of the third-party security problem in the JavaScript ecosystem:
 
 <blockquote class="twitter-tweet"><p lang="en" dir="ltr">Having worked on and followed modules standards from TC39 and WhatWG to Node.js, it&#39;s so so clear that security was, is, and always will be an afterthought.<br><br>Where are the secure-by-default open platform developments? Crypto is the only community I see doing it.</p>&mdash; Guy Bedford (@guybedford) <a href="https://twitter.com/guybedford/status/1296935308445900801?ref_src=twsrc%5Etfw">August 21, 2020</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-<p>The underlying issue is the <strong>npm install</strong> one - as the registry and our dependence on it continues to grow, we are build more and more automated tooling to reduce the friction of
-  adoption, the security gap here leaves a huge pressure on the entire ecosystem.
+<p>This actually comes out of a lot of background, from my own work on Node.js modules and security concepts, following the Agoric SES plans, and feeling a sense of the inadequacy with Node.js, Deno and browser security and where things are headed.
 
-<p>Already, this can start to be felt in terms of security advisories for freely maintained open source projects causing more maintainer pressures. People giving up their time freely are now in a position where they are obliged to
-  respond to regular security vulnerabilities in their packages which may or may not be genuine escalations of privilege. We engage in security theatre to create the illusion of safety, and yet all the while everything remains unsecure.
-  It is far too easy for me as a maintainer to hack you since you run my code that you haven't read line for line.
+<p><em>TLDR; I think we need to think about new more secure runtimes for JS, and it should be a collaborative effort, with the components being modules, adding secure scopes to import maps, and a careful security model plus compatibility with the existing ecosystem. <a href="#secure-modular-runtime-proposal">Skip ahead to the proposal here.</em></a>
 
-<p>The defeatest position is that this is just the way things have to be. But it's important to remember that despite all the cruft; trust, good code and agents of creation with good intentions, while increasingly rare as capitalism continues to morph into its weird technological shapes, do exist. The idea then,
-  is to trust the few with a little, and the rest with much less.
+<a name="third-party-security-problem"></a>
+<h2><a href="#third-party-security-problem">#</a>The Third-Party Security Problem</h2>
 
-<p>The common response from anyone working on Chrome or v8, is that this simply isn't possible:
+<p>The underlying issue is the <strong>npm install</strong> one - as the registry and our dependence on it continues to expand, the security gap just continues to grow here in terms of the amount of untrusted code we are running on a daily basis.
+
+<p>Maintainers giving up their time freely are now in a position where they are obliged to respond to regular security issues or risk having unpatchable advisories released for their packages, which may or may not even be genuine escalations of privilege.
+  We engage in security theatre to create the illusion of safety, and yet all the while everything remains highly unsecure.
+
+<p>Rather than simply accepting the status quo, there are many companies working on actively mitigating these security properties. The problem is that they are side ecosystems or patches on the existing ecosystem, and never fundamentally designed into the ecosystems themselves. Third-party security remains a huge if not impossible effort, only companies like Figma or Salesforce can afford to tackle.
+
+<p>Realms may change this, but it only gives us the tools - the models and conventions for a secure JavaScript ecosystem still need to be actively built.
+
+<p><em>Security is all too easily an afterthought, and the time to get out of that mindset for modular security is now.</em>
+
+<p>The common response from anyone working on Chrome or v8, is that this type of security simply isn't possible:
 
 <blockquote class="twitter-tweet"><p lang="en" dir="ltr">how is this possible post spectre</p>&mdash; Sathya Gunasekaran (@_gsathya) <a href="https://twitter.com/_gsathya/status/1297121933004353536?ref_src=twsrc%5Etfw">August 22, 2020</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-<p>Now I admit I have fullly consumed the kool-aid of the OCap and SES models and the ideas shared by Mark Miller (the representative for Agoric at TC39). I even gave a session on these concepts at the Node.js Collaboration summit, where for example I direct address Spectre.
+<p>Now I admit I have fully bought in to the elegance of the the OCAP and SES models and the ideas shared by those at Agoric (who are long-time members of TC39). I even gave a session on these concepts at the Node.js Collaboration summit where, for example, I directly address Spectre as well.
 
-<p>But, an idea so attractive as modular security should be fully disproven if we are to abandon it. And while it hasn't been comprehensively disproven, we do not do justice to the development of the platform to not fully explore it as a possibility (or to comprehensively disprove it).
+<p>For all the tremendous benefits of the concept of modular security, there are certainly many questions, but I believe we should actively tackle this work and not abandon the same-process modular security models unless they can be fully disproved.
 
-<a name="model"></a>
-<h2><a href="#model">#</a>Model</h2>
+<a name="ses-model"></a>
+<h2><a href="#ses-model">#</a>The SES Model</h2>
 
 <p>The gist of the SES (<a rel=noopener target=_blank href="https://github.com/Agoric/ses-shim">Secure ECMAScript</a>) model, as proposed by Agoric, is something like the following:
 
 <ol>
   <li>All capabilities are imported through the module system (<code>import fetch from 'fetch'</code> kind of thing) - <strong>the module resolver acts as the security enforcer</strong>.</li>
-  <li>The consequence of (1) is that <em>all global capabilities should be disabled.</em></li>
+  <li>The consequence of (1) is that <em>all global capabilities should be disabled / carfully controlled.</em></li>
   <li>JavaScript needs a whole bunch of patching to prevent prototype mutations and unintentional side channels such as <code>return { toString() {} }</code> object hooks. You have to manage package interfaces very carefully and freeze the entire global object from prototype mutation.</li>
 </ol>
 
 <p>See the talk by Mark Miller on <a rel=noopener target=_blank href="https://www.youtube.com/watch?v=9WdbTucMaRo">Extremely Modular Distributed JavaScript</a>, or my presentation from the Node.js Collaboration Summit,
 <a rel=noopener target=_blank href="https://docs.google.com/presentation/d/1VUpxoxitZCINJI7jXec4i87YiYZsXr8pCSHdHY5pW30/edit?usp=sharing">Security, Modules and Node.js</a>, for a more in-depth coverage of the full model.
 
-<p>The result of this model is in theory the ability to run less trusted code. The date time library you npm install cannot install a trojan horse on your computer sort of thing, which seems a pretty useful property to have in my opinion.
+<p>The result of this model is in theory the ability to run less trusted code. The date time library you npm install cannot install a trojan horse on your computer sort of thing, which seems a pretty useful property to have.
 
 <p>Towards (3) we already <a rel=noopener href="https://nodejs.org/dist/latest-v14.x/docs/api/cli.html#cli_frozen_intrinsics">shipped the `--frozen-intrinsics` flag in Node.js</a>. (1) and (2) clearly require new secure JavaScript runtime development though.</p>
 
 <a name="criticisms"></a>
 <h2><a href="#criticisms">#</a>Criticisms</h2>
 
+The criticisms of this model fall under three major areas: the Spectre class of vulnerabilities, the difficulty in providing secure cross-package interfaces, and that these ideas might sound good in theory but are impractical in real JS environments.
+
 <a name="spectre"></a>
 <h3><a href="#spectre">#</a>Spectre</h3>
 
-<p>As mentioned the primary criticism is Spectre. The Spectre class of attacks mean that code running on the same process can use CPU reverse engineering and timing information to read secret information
+<p>The Spectre class of attacks mean that code running on the same process can use CPU reverse engineering and timing information to read secret information
 used by other separate code in the same process. Think passwords, secure tokens, etc.
 
-<p>The first thing to note is that Spectre is the ability to steal secrets not the ability to install a trojan horse on your computer. Even if we never solve Spectre, my first argument is that stopping code from being able to perform
-  destructive operations or having access to destructive capabilities is still a win. You might have your wallet stolen, but you can replace your credit cards and no one can set fire to your house! And what we are comparing this against is having no security for third-party libraries at all.
+<p>The first thing to note is that Spectre is the ability to steal secrets and not the ability to install a trojan horse on your computer. Even if we can't fully mitigate Spectre (and we can certainly try), we are still limiting destructive capabilities such as giving full disk and network access
+  to random people on the internet, which is a huge win. <em>What we are comparing this model against is having no separate security for third-party libraries at all, which is the case in Node.js, Deno and browsers today - in the worst case, it is better to just lose a credit card, than to lose a credit card AND have your house burnt down.</em>
 
 <p>The second thing to note here is that if you have a true capability system and can carefully control network access, then the capability to exfiltrate (basically to use <code>fetch</code>), can itself be treated as a critical permission. Secrets might be discovered but not as easily shared.
 
-<p>The counter argument to controlling the capability to exfiltrate are that there are always side channels to be found - the blinking of a light through whatever complex window to share the information of the secret token.
+<p>The counterargument to controlling the capability to exfiltrate are that there are always side channels to be found - the blinking of a light through whatever complex window to share the information of the secret token. It's complex of course.
 
-<p>Finally, in terms of genuine Spectre mitigations as opposed to just skirting the concerns above, Cloudflare have this same problem for their same-process deployment of Cloudflare Workers, which they recently discussed here - <a rel=noopener target=_blank href="https://blog.cloudflare.com/mitigating-spectre-and-other-security-threats-the-cloudflare-workers-security-model/">Mitigating Spectre and Other Security Threats: The Cloudflare Workers Security Model</a>
+<p>Finally, in terms of genuine Spectre mitigations, Cloudflare have this same problem for their same-process deployment of Cloudflare Workers, which they recently discussed here - <a rel=noopener target=_blank href="https://blog.cloudflare.com/mitigating-spectre-and-other-security-threats-the-cloudflare-workers-security-model/">Mitigating Spectre and Other Security Threats: The Cloudflare Workers Security Model</a>
 
 <p>Their mitigations are summarized at the end, and roughly involve:
 
@@ -116,44 +126,105 @@ export function renderGraph () {
 }
 </code></pre>
 
-<p><code>renderGraph</code> knows the renderer will call it via <code>renderArray[i]()</code>, which in JavaScript will set the <code>this</code> binding to the array itself, thus giving access to the title component from the graph component.</p>
+<p><code>renderGraph</code> knows the renderer will call it via <code>renderArray[i]()</code>, which in JavaScript will set the <code>this</code> binding to the array itself, thus giving access to the title component from the graph component.
 
-<p>Yes it's a contrived example, but it demonstrates how easily you can get capability spillage in JavaScript, and that's before we even get to information spillage eg via <code>toString()</code>.</p>
+<p>Yes it's a contrived example, but it demonstrates how easily you can get capability spillage in JavaScript, and that's before we even get to information spillage eg via <code>toString()</code>.
 
-<p>Locking down these sorts of inadvertant side channels means making all package interfaces out of <code>SafeFunction</code> and <code>SafeObject</code> objects that don't have these sorts of terrible flaws, and it's not an easy problem to solve - this is where the bulk of the effort needs to be made.</p>
+<p>Locking down these sorts of inadvertant side channels means making all package interfaces out of <code>SafeFunction</code> and <code>SafeObject</code> objects that don't have these sorts of awful flaws, and it's not an easy problem to solve - this is where the bulk of the effort needs to be made.
 
-<p>The other side of this to consider is that Web Assembly module interfaces don't have these same sorts of capability and information spillage we have in JavaScript, which certainly gives hope for future ecosystems on this problem.</p>
+<p>The other side of this to consider is that Web Assembly module interfaces don't have these same sorts of capability and information spillage we have in JavaScript, which certainly gives hope for future ecosystems on this problem.
 
 <a name="impractical-constraints"></a>
 <h3><a href="#impractical-constraints">#</a>Impractical Constraints</h3>
 
 <p>The last argument is that all of the above are simply too much of a constraint on code and ecosystems. That there exists no path from what we have today to this kind of secure ecosystem. As a result it will always be a fringe system
-  with low adoption.
+  with low adoption only the major players can truly invest in when needed.
 
-<p>This I believe is the most crucial issue to solve. Security means nothing if no one adopts it.
+<p>This I believe is the most crucial issue to solve. The ability to have secure software should be fully democratized.
 
-<a name="proposal"></a>
-<h2><a href="#proposal">#</a>Proposal</h2>
+<a name="secure-modular-runtime-proposal"></a>
+<h2><a href="#secure-modular-runtime-proposal">#</a>Secure Modular Runtime Proposal</h2>
 
-<p>So I'd like to propose a hypothetical runtime for JavaScript as a thought experiment, and to invite scrutiny as to whether this solves the following problems:
+<p>I'd like to propose a hypothetical runtime for JavaScript as a strawman, and to invite scrutiny as to whether this solves the following problems:
 
 <ol>
-<li>That this runtime provides a safer restriction of low-level capabilities and information for third-party code running in the same process than we have in Node.js or Deno today.
-<li>That this runtime can support an onramp from the existing JavaScript ecosystem, which is crucial to widespread adoption.
+<li>That this runtime can fully restrict high-level capability access from packages for third-party code running in the same process than we have in Node.js, Deno and browsers today.
+<li>That this runtime can support an onramp from the existing JavaScript ecosystem, which is crucial for adoption.
 </ol>
 
-<p>The form of the runtime is a direct consolidation of all of the above discussed:
+<p>The proposal is based on a new runtime because the ecosystem of JavaScript packages is shaped by the runtimes. If we want to shape the ecosystem based on security, this requires a real secure runtime target for users to build for.
+
+<p>The form of the runtime is a direct consolidation of the above model:
 
 <ul>
-  <li>The global object should have no capabilities, only intrinsics, with all intrinsics provided as safe intrinsics. <code>Date.now()</code> and <code>new Worker</code> should not exist unless imported explicitly / handled via some explicit capability.
-  <li>The permissions model should be based on package-level import permissions which are configured on a per-package basis.
-  <li>The interfaces between all packages should use <code>SafeObject</code>, <code>SafeFunction</code> and <code>SafeClass</code> implementations - a careful language subset for communication that the module system itself verifies packages are adhering to.
-  <li>The existing npm ecosystem should be supported via codemods that can run 90%+ of existing code within this new secure model.
+  <li>The global object should have no capabilities (no <code>fetch</code>, <code>Worker</code>, <code>Date</code> globals), only intrinsics, with all those intrinsics provided as safe intrinsic instantiations. Instead, all capabilities are imported.
+  <li>The permissions model should use import maps, with a secure scope implementation where scopes do not have fallbacks at all and packages cannot import anything outside of their scope unless it is explicitly defined in the map. This turns import maps into a security mechanism (security by design), as a single source of truth and with per-package permissions enabled by the scope mappings.
+  <li>The interfaces between all packages should use <code>SafeObject</code>, <code>SafeFunction</code> and <code>SafeClass</code> implementations - a careful language subset for communication that the module system itself verifies packages are adhering to. This could be a dynamic wrapping and unwrapping, or it could be more static or even user-defined.
+  <li>The existing npm ecosystem should be supported via codemods that can run at least 90% of existing code within this new secure model.
 </ul>
 
-<p>In terms of the package interfaces,  package export bindings would be required to use the safe interface system. A package with export bindings using eg an insecure JavaScript object would be rejected by the runtime.
+<a name="secure-scopes"></a>
+<h2><a href="#secure-scopes">#</a>Secure Scopes</h2>
 
-<p>Codemods would be designed that could use type inference to convert the outwardly facing components of existing packages to this safe form eg:
+<p>The Secure Scopes proposal is an Import Maps <a target=_blank rel=noopener href="https://github.com/guybedford/import-maps-extensions#secure-scopes">extension proposal</a> to allow import maps to comprehensively define what can <strong>and what cannot</strong> be imported.</p>
+
+<p>This proposal has grown out of the idea that Node.js Policies and Import Maps have ended up converging. While in SystemJS we've needed import maps to support integrity, in Node.js we've needed Policies to support import maps-style scopes and mappings.
+
+<p>The clear technical congruence here happened completely naturally - but points to a path: <em>Import Maps are a natural home for defining import capabilities</em>. This solves the "security as afterthought" problem if we can combine goals here as a user constructing an import map doesn't care about security, but get it as a side-effect of the worflow (if they so desire to turn on strong enforcement).
+
+<p>The idea is that in a capabilities model, you end up defining permissions something like:
+
+<pre><code class="lang-javascript">
+{
+  "packageA": {
+    "capabilities": ["packageB"]
+  },
+  "packageB": {
+    "capabilities": "fs?local"
+  }
+}
+</code></pre>
+
+<p>Where a package cannot import anything outside of the package unless explicitly granted access via the capabillity system.
+
+<p>Yet, the import map for this same application looks something like:
+
+<pre><code class="lang-javascript">
+{
+  "imports": {
+    "packageA": "/path/to/packageA/main.js"
+  },
+  "scopes": {
+    "/path/to/packageA/": {
+      "packageB": "/path/to/packageB/main.js"
+    },
+    "/path/to/packageB/": {
+      "fs": "core:fs?local"
+    }
+  }
+}
+</code></pre>
+
+<p>The capability information is already naturally defined in the import map - that is, it is redundant information. Again, on the other side, Node.js Policies <a target=_blank rel=noopener href="https://nodejs.org/dist/latest-v14.x/docs/api/policy.html#policy_dependency_redirection">look awfully like an import map</a>.
+
+<p>The changes to import maps are very small to support this, can can be done as an extension proposal:
+
+<ol>
+  <li>A new "secureScope" mode for import maps, enabled by a top-level flag or otherwise
+  <li>Do not permit any URL within a scope to resolve to a URL outside of that scope, <stong>unless</stong> that URL is explicitly defined in the mappings.
+  <li>Disable scope fallbacks from applying
+</ul>
+
+<p>With these small tweaks we have the potential to turn import maps into the primary modular workflow for application development, that is easily auditable and readable and manageable. Where security is built in from the start.
+
+<p><strong>Getting this simple idea across is my primary reason for writing this post and opening these discussions.</strong>
+
+<a name="package-interfaces"></a>
+<h2><a href="#package-interfaces">#</a>Package Interfaces</h2>
+
+<p>In terms of the package interfaces, the exported package bindings (eg Node.js "main" / "exports" field module exports) would be required to use the safe interface system. A package with export bindings using eg an insecure JavaScript object would be rejected by the runtime.
+
+<p>Codemods would also be designed that could use type inference to convert the outwardly facing components of existing packages to this safe form eg:
 
 <pre><code class="lang-javascript">
 export function renderGraph () {
@@ -169,43 +240,58 @@ export function SafeFunction(renderGraph () {
 })
 </code></pre>
 
-<p>where the <code>SafeFunction</code> implementation would ensure no rebinding of <code>this</code> by callers. All capability references would thus be made fully explicit to the sofware creator. Advisories are still necessary, but within a well-defined and constrained permissions model that clearly defines what an escalation really means.
+<p>before it is executed in the engine. The <code>SafeFunction</code> implementation would ensure no rebinding of <code>this</code> by callers. All capability references would thus be made fully explicit to the sofware creator. Advisories are still necessary, but within a well-defined and constrained permissions model that clearly defines what an escalation really means.
 
-<p>These runtime package interfaces continue to pose the greatest challenge - they should be easy to author and maintain.
+<p><code>SafeObject</code> applies recursively and <code>SafeFunction</code> in turn applies this same sanitization to its return values dynamically at runtime. Live export binding assignments could be replaced with a <code>SafeValue</code> base class reassignment operation. Primitives remain untouched.
 
-<p>Perhaps some really nice-looking syntax (using globals, as it is fine to use globals here), would help soften the cost here:
+<p>There could be various ways to apply these safety functions:
+
+<ol>
+  <li>Explicitly requiring users to use these interfaces, perhaps as nice sugar global names like <code>Fn</code>, <code>Obj</code>, <code>Cls</code> - <code>export Fn(() => {})</code>, as the variants of Agoric's <code>harden</code>.
+  <li>These safety wrappers could be done as a runtime module wrapper entirely requiring no work from the user.
+  <li>A sort of pre-compilation phase could automatically inject the safety interfaces.
+  <li>Engine work could make this first-class primitives, and an engine can in theory upstream its own directions here over time.
+</ol>
+
+<p>The above vary on where they place the performance overhead of the wrapping, but with careful thought to use cases, it should be possible to optimize for the necessary performance properties while maintaining these security guarantees.
+  
+<p>This is the most critical part to the model, and there are likely some quite complex cases to tackle here, but I am yet to hear of any major blocks to implementing these well-defined interface scenarios.
+
+<a name="ecosystem-compatibility"></a>
+<h2><a href="#ecosystem-compatibility">#</a>Ecosystem Compatibility</h2>
+
+<p>Using codemods third-party packages can be converted into a form to be exected in the secure runtime. This isn't easy but it should be possible in over 90% of cases to provide ecosystem compatibility. For example:
 
 <pre><code class="lang-javascript">
-export Fn(() => {
-  // Runtime throw -> Unsafe object returned
-  return {};
-  // Correct -> Safe interface!
-  return Obj({ safe: 'object' });
-});
+export async function getCurrentResource () {
+  return fetch(`${globalThis.resourceUrl}/${Date.now()}`);
+}
+</code></pre>
 
-export Obj({
-  safe: 'object'
-});
+<p>can be converted into:</p>
 
-export Class(class MyClass {
+<pre><code class="lang-javascript">
+import fetch from 'fetch';
+import { now } from 'date';
+export Fn(async getCurrentResource () => {
+  return fetch(`${import.meta.local.resourceUrl}/${now()}`);
 });
 </code></pre>
 
-<p>Such that it can start to feel like a natural paradigm for a runtime that can compete with the likes of Deno and Node.js. I believe Salesforce have also been exploring using proxies as another way to managing these "membranes" in a safe way.
+<p>where <code>fetch</code> and <code>date</code> are the controlled capability permissions and <code>import.meta.local</code> represents a package-level global that can be set at the application level for the package to support the unknown global access cases.
 
-<p>The codemods are really key though to supporting existing code. And if this feels like setting the bar too high, note that we already codemod all npm code to run it in the browser in the first place with our build tooling, and this is also what jspm does today to support browser imports.
+<p><em>In this way we can fully codemod existing third-party packages from npm into the secure package convention.</em>
+  
+<p>If this sounds like setting the bar too high, just remember that we already codemod all npm code today in the first place everytime we use our current build tooling, and these techniques are also exactly what jspm does to <a rel=noopener target=_blank href="https://jspm.org">support browser imports</a>.
 
-<a name="alternatives">
-<h2><a href="#alternatives">#</a>Alternatives</h2>
+<a name="summary">
+<h2><a href="#summary">#</a>Summary</h2>
 
-<p>As far as I can tell the only alternative to handling third-party security comes down to continuing to rely on security advisories, and improving the process of advisory detection, mitigation and handling.
+<p>So long as modular security holds hope for JavaScript, now is the time to initiate the work here, as it seems like our best bet for securely running third-party code in future. It can not be Node.js or Deno or the browser as their respective ships have sailed on not supporting the needed properties described here.
 
-<p>If this really is our best bet, then there is a lot more work to be done here to improve this process, eg automatically detecting prototype mutations in JavaScript and to automatically fix them. To have standard
-  tools that can formally verify the security of third-party JavaScript code.
+<p>If it does turn out safe package interfaces are truly not practical or possible for JavaScript, then moving these ideas into the Wasm side of things and ensuring we can start to obtain these properties for future Wasm runtimes would be the worthwhile approach.
 
-<p>Personally I just want to work on these problems as it seems it is our responsibility at this point, in whatever form would provide the greatest benefit.
-
-<p>And if safe package interfaces are truly not practical or possible for JavaScript, then moving these ideas into the Wasm side of things and ensuring we can start to obtain these properties for future Wasm runtimes would be worthwhile too, and something that should be started now, not added later.
+<p>But please, let's not sit back but actively work on these security problems now and not dismiss their potential even if it isn't certain. Otherwise we again treat security as an afterthought later.
         </div>
         <div id="disqus_thread"></div>
         <script type="text/javascript">
