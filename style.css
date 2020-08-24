@@ -145,6 +145,7 @@ h2 a, h3 a {
   background-color: #fafafa;
 }
 pre {
+  padding-top: 0;
   line-height: 1.4em;
   font-size: 1em;
   background-color: #fafafa;
