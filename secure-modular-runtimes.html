@@ -66,12 +66,12 @@
 
 <p>The result of this model is, in theory, the ability to restrict destructive code. The date time library you npm install cannot install a trojan horse on your computer, which seems a pretty useful property to have.
 
-<p>Towards (3) we already <a rel=noopener href="https://nodejs.org/dist/latest-v14.x/docs/api/cli.html#cli_frozen_intrinsics">shipped the `--frozen-intrinsics` flag in Node.js</a>. (1) and (2) clearly require new secure JavaScript runtime development though.</p>
+<p>Towards (3) we already <a rel=noopener href="https://nodejs.org/dist/latest-v14.x/docs/api/cli.html#cli_frozen_intrinsics">shipped the `--frozen-intrinsics` flag in Node.js</a>. (1) and (2) clearly require breaking changes to what we have in any existing runtimes today.</p>
 
 <a name="criticisms"></a>
 <h2><a href="#criticisms">#</a>Criticisms</h2>
 
-<p>The criticisms of this model fall under three major areas: the Spectre class of vulnerabilities, the difficulty in providing secure cross-package interfaces, and that these ideas might sound good in theory but are impractical in real JS environments.
+<p>The criticisms of this model include the Spectre class of vulnerabilities, the difficulty in providing secure cross-package interfaces, and that these ideas might sound good in theory but are impractical in real JS environments.
 
 <a name="spectre"></a>
 <h3><a href="#spectre">#</a>Spectre</h3>
@@ -136,9 +136,9 @@ export function renderGraph () {
 <h3><a href="#impractical-constraints">#</a>Impractical Constraints</h3>
 
 <p>The third argument is that the security requirements are simply too much of a constraint on JavaScript and its ecosystems. That there exists no path from the ecosystems today to this kind of secure ecosystem. As a result, secure runtimes will always be a fringe effort
-  with low adoption that only the major players can truly invest in when needed.
+  adopted by the few who can invest in the time and effort to support it.
 
-<p>This, I believe, is the most crucial problem to solve. The ability to have secure software should be fully democratized.
+<p>This, I believe, is the most crucial problem to solve. The ability to run third-party libraries with less risk should be fully democratized.
 
 <a name="secure-modular-runtime-proposal"></a>
 <h2><a href="#secure-modular-runtime-proposal">#</a>Secure Modular Runtime Proposal</h2>
@@ -147,12 +147,12 @@ export function renderGraph () {
 
 <ol>
 <li>That this runtime can fully restrict high-level capability access from packages for third-party code running in the same process than we have in Node.js, Deno and browsers today.
-<li>That this runtime can support an onramp from the existing JavaScript ecosystem, which is crucial for adoption.
+<li>That this runtime can support an onramp from the existing JavaScript ecosystems, which is crucial for adoption.
 </ol>
 
-<p>The proposal is based on a new runtime because the ecosystem of JavaScript packages is shaped by the runtimes. If we want to shape the ecosystem based on security, this requires a real secure runtime for users to target.
+<p>The proposal is based on a secure runtime because that is the logical conclusion of designing security in from the start. The JavaScript ecosystem is shaped by its runtimes, and only by providing a secure runtime target can we even begin to shape the ecosystem towards more secure properties.
 
-<p>The form of the runtime is a direct consolidation of the above model:
+<p>The form of the runtime is a direct implementation of the SES model:
 
 <ul>
   <li>The global object should have no capabilities (no <code>fetch</code>, <code>Worker</code>, <code>Date</code> globals), only intrinsics, with all those intrinsics provided as safe intrinsic instantiations. Instead, all capabilities are imported.
