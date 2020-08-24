@@ -2,7 +2,7 @@
 <head>
   <meta charset="utf-8">
   <title>Secure Modular Runtimes</title>
-  <meta name="description" content="Proposal for a Secure Modular JavaScript-based runtime">
+  <meta name="description" content="Proposal for secure, modular, JavaScript-based runtimes">
   <meta name="viewport" content="width=device-width">
 
   <link rel="stylesheet" href="style.css">
@@ -82,13 +82,13 @@
 used by other separate code in the same process. Think passwords, secure tokens, etc.
 
 <p>The first thing to note is that Spectre is the ability to steal secrets and not the ability to install a trojan horse on your computer. Even if we can't fully mitigate Spectre (and we can certainly try), we are still limiting destructive capabilities such as giving full disk and network access
-  to random people on the internet, which is a huge win. <em>What we are comparing this model against is having no separate security for third-party libraries at all, which is the case in Node.js, Deno and browsers today - in the worst case, it is better to just lose a credit card, than to lose a credit card AND have your house burnt down.</em>
+  to random people on the internet, which is a huge win. What we are comparing this model against is having no separate security for third-party libraries at all, which is the case in Node.js, Deno and browsers today. <em>In the case of an attack, it is better to just lose a credit card, than to lose a credit card AND have your house burnt down.</em>
 
 <p>The second thing to note here is that if you have a true capability system and can carefully control network access, then the capability to exfiltrate (basically to use <code>fetch</code>), can itself be treated as a critical permission. Secrets might be discovered but not as easily shared.
 
-<p>The counterargument to controlling the capability to exfiltrate are that there are always side channels to be found - the blinking of a light through whatever complex window to share the information of the secret token. It's complex of course.
+<p>The counterargument to controlling the capability to exfiltrate are that there are always side channels to be found - the blinking of a light through whatever complex window to share the information of the secret token. It's complex, of course.
 
-<p>Finally, in terms of genuine Spectre mitigations, Cloudflare have this same problem for their same-process deployment of Cloudflare Workers, which they recently discussed here - <a rel=noopener target=_blank href="https://blog.cloudflare.com/mitigating-spectre-and-other-security-threats-the-cloudflare-workers-security-model/">Mitigating Spectre and Other Security Threats: The Cloudflare Workers Security Model</a>
+<p>Finally, in terms of genuine Spectre mitigations, Cloudflare have this same problem for their same-process deployment of Cloudflare Workers, which they recently discussed here - <a rel=noopener target=_blank href="https://blog.cloudflare.com/mitigating-spectre-and-other-security-threats-the-cloudflare-workers-security-model/">Mitigating Spectre and Other Security Threats: The Cloudflare Workers Security Model</a>.
 
 <p>Their mitigations are summarized at the end, and roughly involve:
 
