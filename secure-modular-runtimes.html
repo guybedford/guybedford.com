@@ -168,7 +168,7 @@ export function renderGraph () {
 
 <p>This proposal has grown out of the idea that Node.js Policies and Import Maps have ended up converging. While in SystemJS we've needed import maps to support integrity, in Node.js we've needed Policies to support import maps-style scopes and mappings.
 
-<p>The clear technical congruence here happened completely naturally, but points to a path: <em>Import Maps are a natural home for defining the integrity of capabilities</em>. This solves the "security as afterthought" problem if we can combine goals here, since a user constructing an import map doesn't care about security, but gets it as a side-effect of the worflow itself (if they enable strong capability enforcement).
+<p>The clear technical congruence here happened completely naturally, but points to a path: <em>Import Maps are a natural home for defining the integrity of capabilities</em>. This solves the "security as afterthought" problem if we can combine goals here, since a user constructing an import map doesn't care about security, but gets it as a side-effect of the worflow itself (if they choose to enable strong capability enforcement).
 
 <p>The idea is that in a capabilities model, you end up defining permissions something like:
 
