@@ -162,7 +162,7 @@ export function renderGraph () {
 </ul>
 
 <a name="secure-scopes"></a>
-<h2><a href="#secure-scopes">#</a>Secure Scopes</h2>
+<h3><a href="#secure-scopes">#</a>Secure Scopes</h3>
 
 <p>The Secure Scopes proposal is an Import Maps <a target=_blank rel=noopener href="https://github.com/guybedford/import-maps-extensions#secure-scopes">extension proposal</a> to allow import maps to comprehensively define what can <strong>and what cannot</strong> be imported.</p>
 
@@ -216,7 +216,7 @@ export function renderGraph () {
 <p>With these small tweaks we have the potential to turn import maps into the primary modular workflow for application development that is easily auditable, readable and manageable, and where capability definitions are built in from the start.
 
 <a name="package-interfaces"></a>
-<h2><a href="#package-interfaces">#</a>Package Interfaces</h2>
+<h3><a href="#package-interfaces">#</a>Package Interfaces</h3>
 
 <p>In terms of the package interfaces, the exported package bindings (eg Node.js "main" / <a rel=noopener target=_blank href="https://nodejs.org/dist/latest-v14.x/docs/api/esm.html#esm_package_entry_points">"exports" field module exports</a>) would use the safe interface system.
 
@@ -254,7 +254,7 @@ export function SafeFunction(renderGraph () {
 <p>This is the most critical part to the model, and there are likely some quite complex cases to tackle here, but I am yet to hear of any major blocks to implementing these well-defined interface scenarios.
 
 <a name="ecosystem-compatibility"></a>
-<h2><a href="#ecosystem-compatibility">#</a>Ecosystem Compatibility</h2>
+<h3><a href="#ecosystem-compatibility">#</a>Ecosystem Compatibility</h3>
 
 <p>Existing JavaScript support could be provided using codemods that convert the packages into a form to be exected in the secure runtime. This isn't easy but it should be possible in over 90% of cases to provide ecosystem compatibility. For example:
 
