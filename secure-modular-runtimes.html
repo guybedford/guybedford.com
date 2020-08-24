@@ -228,7 +228,7 @@ export function renderGraph () {
 }
 </code></pre>
 
-<p>would be executed as:
+<p>would be converted to be executed in the runtime as:
 
 <pre><code class="lang-javascript">
 export function SafeFunction(renderGraph () {
@@ -236,7 +236,7 @@ export function SafeFunction(renderGraph () {
 })
 </code></pre>
 
-<p>before it is executed in the engine. The <code>SafeFunction</code> implementation would ensure no rebinding of <code>this</code> by callers. All capability references would thus be made fully explicit to the software creator. Advisories are still necessary, but within a well-defined and constrained permissions model that clearly defines what an escalation really means.
+<p>The <code>SafeFunction</code> implementation would ensure no rebinding of <code>this</code> by callers. All capability references would thus be made fully explicit to the software creator. Advisories are still necessary, but within a well-defined and constrained permissions model that clearly defines what an escalation really means.
 
 <p><code>SafeObject</code> applies recursively and <code>SafeFunction</code> in turn applies this same sanitization to its return values dynamically at runtime. Live export binding assignments could be replaced with a <code>SafeValue</code> base class reassignment operation. Primitives remain untouched.
 
