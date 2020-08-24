@@ -17,7 +17,7 @@
           <div class="meta">
             <span class="author">Guy Bedford</span>
             &sdot;
-            <span class="date">23 August 2020</span>
+            <span class="date">24 August 2020</span>
           </div>
           <div class="clear"></div>
         </div>
@@ -73,7 +73,7 @@
 <a name="criticisms"></a>
 <h2><a href="#criticisms">#</a>Criticisms</h2>
 
-The criticisms of this model fall under three major areas: the Spectre class of vulnerabilities, the difficulty in providing secure cross-package interfaces, and that these ideas might sound good in theory but are impractical in real JS environments.
+<p>The criticisms of this model fall under three major areas: the Spectre class of vulnerabilities, the difficulty in providing secure cross-package interfaces, and that these ideas might sound good in theory but are impractical in real JS environments.
 
 <a name="spectre"></a>
 <h3><a href="#spectre">#</a>Spectre</h3>
@@ -213,7 +213,7 @@ export function renderGraph () {
   <li>A new "secureScope" mode for import maps, enabled by a top-level flag or otherwise
   <li>Do not permit any URL within a scope to resolve to a URL outside of that scope, <stong>unless</stong> that URL is explicitly defined in the mappings.
   <li>Disable scope fallbacks from applying
-</ul>
+</ol>
 
 <p>With these small tweaks we have the potential to turn import maps into the primary modular workflow for application development, that is easily auditable and readable and manageable. Where security is built in from the start.
 
