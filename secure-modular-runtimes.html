@@ -246,7 +246,7 @@ export function SafeFunction(renderGraph () {
   <li>Explicitly requiring users to use these interfaces, perhaps as nice sugar global names like <code>Fn</code>, <code>Obj</code>, <code>Cls</code> - <code>export Fn(() => {})</code>, as the variants of Agoric's <code>harden</code>.
   <li>These safety wrappers could be done as a runtime module wrapper entirely requiring no work from the user.
   <li>A sort of pre-compilation phase could automatically inject the safety interfaces.
-  <li>Engine work could make this first-class primitives, and an engine can in theory upstream its own directions here over time.
+  <li>Engine work could make these first-class primitives, and a new runtime could in theory upstream its own directions here over time.
 </ol>
 
 <p>The above vary on where they place the performance overhead of the wrapping, but with careful thought to use cases, it should be possible to optimize for the necessary performance properties while maintaining these security guarantees.
