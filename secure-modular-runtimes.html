@@ -170,7 +170,7 @@ export function renderGraph () {
 
 <p>This proposal has grown out of the idea that Node.js Policies and Import Maps have ended up converging. While in SystemJS we've needed import maps to support integrity, in Node.js we've needed Policies to support import maps-style scopes and mappings.
 
-<p>The clear technical congruence here happened completely naturally - but points to a path: <em>Import Maps are a natural home for defining import capabilities</em>. This solves the "security as afterthought" problem if we can combine goals here as a user constructing an import map doesn't care about security, but get it as a side-effect of the worflow (if they so desire to turn on strong enforcement).
+<p>The clear technical congruence here happened completely naturally - but points to a path: <em>Import Maps are a natural home for defining capability integrity</em>. This solves the "security as afterthought" problem if we can combine goals here as a user constructing an import map doesn't care about security, but they get it as a side-effect of the worflow (if they so desire to turn on strong enforcement).
 
 <p>The idea is that in a capabilities model, you end up defining permissions something like:
 
@@ -207,22 +207,22 @@ export function renderGraph () {
 
 <p>The capability information is already naturally defined in the import map - that is, it is redundant information. Again, on the other side, Node.js Policies <a target=_blank rel=noopener href="https://nodejs.org/dist/latest-v14.x/docs/api/policy.html#policy_dependency_redirection">look awfully like an import map</a>.
 
-<p>The changes to import maps are very small to support this, can can be done as an extension proposal:
+<p>The changes to import maps are very small to support this, and can be done as an extension proposal:
 
 <ol>
-  <li>A new "secureScope" mode for import maps, enabled by a top-level flag or otherwise
-  <li>Do not permit any URL within a scope to resolve to a URL outside of that scope, <stong>unless</stong> that URL is explicitly defined in the mappings.
-  <li>Disable scope fallbacks from applying
+  <li>A new <code>"secureScope": true</code> option for import maps, enabled by a top-level property, flag or otherwise.
+  <li>Restrict scopes to not permit imports of URLs outside of that scope, <stong>unless</stong> that URL is explicitly defined in the mappings.
+  <li>Disable scope fallbacks from applying.
 </ol>
 
-<p>With these small tweaks we have the potential to turn import maps into the primary modular workflow for application development, that is easily auditable and readable and manageable. Where security is built in from the start.
+<p>With these small tweaks we have the potential to turn import maps into the primary modular workflow for application development, that is easily auditable, readable and manageable. Where security is built in from the start.
 
-<p><strong>Getting this simple idea across is my primary reason for writing this post and opening these discussions.</strong>
+<p><strong>Getting this simple idea across is one of my primary reason for writing this post and opening these discussions.</strong>
 
 <a name="package-interfaces"></a>
 <h2><a href="#package-interfaces">#</a>Package Interfaces</h2>
 
-<p>In terms of the package interfaces, the exported package bindings (eg Node.js "main" / "exports" field module exports) would be required to use the safe interface system. A package with export bindings using eg an insecure JavaScript object would be rejected by the runtime.
+<p>In terms of the package interfaces, the exported package bindings (eg Node.js "main" / <a rel=noopener target=_blank href="https://nodejs.org/dist/latest-v14.x/docs/api/esm.html#esm_package_entry_points">"exports" field module exports</a>) would be required to use the safe interface system. A package with export bindings using eg an insecure JavaScript object would be rejected by the runtime.
 
 <p>Codemods would also be designed that could use type inference to convert the outwardly facing components of existing packages to this safe form eg:
 
