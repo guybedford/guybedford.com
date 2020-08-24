@@ -33,7 +33,7 @@
 <a name="third-party-security-problem"></a>
 <h2><a href="#third-party-security-problem">#</a>The Third-Party Security Problem</h2>
 
-<p>The underlying issue is the <strong>npm install</strong> one. As the registry and our dependence on it continues to expand, the security gap here continues to grow in terms of the amount of untrusted code we are running on a daily basis.
+<p>The underlying issue is the <code>npm install</code> one. As the registry and our dependence on it continues to expand, the security gap here continues to grow in terms of the amount of untrusted code we are running on a daily basis.
 
 <p>Maintainers giving up their time freely now find themselves obliged to respond to regular security issues or risk having unpatchable advisories released for their packages, which may or may not even be genuine escalations of privilege.
   We engage in security theatre to create the illusion of safety, and yet all the while everything remains highly unsecure.
@@ -58,7 +58,7 @@
 <p>The gist of the SES (<a rel=noopener target=_blank href="https://github.com/Agoric/ses-shim">Secure ECMAScript</a>) model, as proposed by Agoric, is something like the following:
 
 <ol>
-  <li>All capabilities are imported through the module system (<code>import fetch from 'fetch'</code> kind of thing) - <strong>the module resolver acts as the security enforcer</strong>.</li>
+  <li>All capabilities are imported through the module system (<code>import fetch from 'fetch'</code> kind of thing) - <em>the module resolver acts as the security enforcer</em>.</li>
   <li>The consequence of (1) is that <em>all global capabilities should be disabled / carefully controlled.</em></li>
   <li>JavaScript needs a whole bunch of patching to prevent prototype mutations and unintentional side channels such as <code>return { toString() {} }</code> object hooks. You have to manage package interfaces very carefully and freeze the entire global object from prototype mutation.</li>
 </ol>
