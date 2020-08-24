@@ -38,9 +38,9 @@
 <p>Maintainers giving up their time freely now find themselves obliged to respond to regular security issues or risk having unpatchable advisories released for their packages, which may or may not even be genuine escalations of privilege.
   We engage in security theatre to create the illusion of safety, and yet all the while everything remains highly unsecure.
 
-<p>Rather than simply accepting the status quo, many companies are actively working on mitigating these security properties. The problem is that they end up creating side ecosystems or patches to the existing ecosystem, security measures that are never fundamentally designed into the ecosystem itself. Third-party security remains a huge if not impossible effort, that only dedicated teams can afford to tackle, as we see for example with these intiatives by Figma or Salesforce.
+<p>Rather than simply accepting the status quo, many companies are actively working on mitigating these security properties. The problem is that they end up creating side ecosystems or patches to the existing ecosystem, security measures that are never fundamentally designed into the ecosystem itself. Third-party security remains a huge if not impossible effort, that only dedicated teams can afford to tackle, as we see for example with these intiatives by <a rel=noopener target=_blank href="https://www.figma.com/blog/how-we-built-the-figma-plugin-system/">Figma</a> or <a rel=noopener target=_blank href="https://developer.salesforce.com/blogs/developer-relations/2017/02/lockerservice-lightning-container-third-party-libraries-lightning-components.html">Salesforce</a>.
 
-<p>The Realms proposal may give us the tools for a secure ecosystem, but the models and conventions for such a secure JavaScript ecosystem still need to be actively created.
+<p>The <a rel=noopener target=_blank href="https://github.com/tc39/proposal-realms">Realms proposal</a> may give us the tools for constructing a secure runtime, but the JavaScript ecosystem conventions themselves work against supporting security restrictions.
 
 <p>The general view from Chrome/v8, is that this type of third-party per-package security within the same process isn't possible:
 
