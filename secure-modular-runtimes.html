@@ -34,7 +34,7 @@
 
 <p>I wanted to fill in some of the background to this from my own work on Node.js modules and security concepts, following the Agoric SES plans, and from a growing feeling of the inadequacy of the Node.js, Deno and browser runtimes for supporting the third-party security needs of the ecosystem.
 
-<p><em>TLDR; I think we need to think about new more secure runtimes for JS, and it should be a collaborative effort, with the components being modules, adding secure scopes to import maps, and a careful security model plus compatibility with the existing ecosystem. <a href="#secure-modular-runtime-proposal">Skip ahead to the proposal here.</em></a>
+<p><em>TLDR; I think we need to think about new more secure runtimes for JS, and it should be a collaborative effort, with the components being modules, adding isolated scopes to import maps, and a careful security model plus compatibility with the existing ecosystem. <a href="#secure-modular-runtime-proposal">Skip ahead to the proposal here.</em></a>
 
 <a name="third-party-security-problem"></a>
 <h2><a href="#third-party-security-problem">#</a>The Third-Party Security Problem</h2>
@@ -162,15 +162,15 @@ export function renderGraph () {
 
 <ul>
   <li>The global object should have no capabilities (no <code>fetch</code>, <code>Worker</code>, <code>Date</code> globals), only intrinsics, with all those intrinsics provided as safe intrinsic instantiations. Instead, all capabilities are imported.
-  <li>The permissions model should use import maps, with a secure scope implementation where scopes do not have fallbacks at all, and packages cannot import anything outside of their scope unless it is explicitly defined in the map. This treats import maps as the single source of truth for both resolution and per-package capability permissions, enabled by the scope mappings.
+  <li>The permissions model should use import maps, with an isolated scope implementation where scopes do not have fallbacks at all, and packages cannot import anything outside of their scope unless it is explicitly defined in the map. This treats import maps as the single source of truth for both resolution and per-package capability permissions, enabled by the scope mappings.
   <li>The interfaces between all packages should use <code>SafeObject</code>, <code>SafeFunction</code> and <code>SafeClass</code> implementations - a careful language subset for communication that the module system itself ensures that packages are adhering to. This could be a dynamic wrapping and unwrapping, or it could be more static, or even user-defined.
   <li>The existing npm ecosystem should be supported via codemods that can run at least 90% of existing code within this new secure model.
 </ul>
 
-<a name="secure-scopes"></a>
-<h3><a href="#secure-scopes">#</a>Secure Scopes</h3>
+<a name="isolated-scopes"></a>
+<h3><a href="#isolated-scopes">#</a>Isolated Scopes</h3>
 
-<p>The Secure Scopes proposal is an Import Maps <a target=_blank rel=noopener href="https://github.com/guybedford/import-maps-extensions#secure-scopes">extension proposal</a> to allow import maps to comprehensively define what can <strong>and what cannot</strong> be imported.</p>
+<p>The Isolated Scopes proposal is an Import Maps <a target=_blank rel=noopener href="https://github.com/guybedford/import-maps-extensions#isolated-scopes">extension proposal</a> to allow import maps to comprehensively define what can <strong>and what cannot</strong> be imported.</p>
 
 <p>This proposal has grown out of the idea that Node.js Policies and Import Maps have ended up converging. While in SystemJS we've needed import maps to support integrity, in Node.js we've needed Policies to support import maps-style scopes and mappings.
 
@@ -214,7 +214,7 @@ export function renderGraph () {
 <p>The changes to import maps to support this are very minor and can be done as an extension proposal:
 
 <ol>
-  <li>Provide a new <code>"secureScope": true</code> option for import maps, enabled by a top-level property, flag or otherwise.
+  <li>Provide a new <code>"isolatedScope": true</code> option for import maps, enabled by a top-level property, flag or otherwise.
   <li>Restrict scopes to not permit imports of URLs outside of that scope, <stong>unless</stong> that URL is explicitly defined in the mappings.
   <li>Disable scope fallbacks from applying.
 </ol>
