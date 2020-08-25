@@ -32,7 +32,7 @@
 
 <blockquote class="twitter-tweet"><p lang="en" dir="ltr">Having worked on and followed modules standards from TC39 and WhatWG to Node.js, it&#39;s so so clear that security was, is, and always will be an afterthought.<br><br>Where are the secure-by-default open platform developments? Crypto is the only community I see doing it.</p>&mdash; Guy Bedford (@guybedford) <a href="https://twitter.com/guybedford/status/1296935308445900801?ref_src=twsrc%5Etfw">August 21, 2020</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-<p>I wanted to fill in some of the background to this from my own work on Node.js modules and security concepts, following the Agoric SES plans, and from a growing feeling of the inadequacy of the Node.js, Deno and browser runtimes for supporting the third-party security needs of the ecosystem.
+<p>I wanted to fill in some of the background to this from my own work on Node.js modules and security concepts, following the Agoric SES and compartment models, and from a growing feeling of the inadequacy of the Node.js, Deno and browser runtimes for supporting the third-party security needs of the ecosystem.
 
 <p><em>TLDR; I think we need to think about new more secure runtimes for JS, and it should be a collaborative effort, with the components being modules, adding isolated scopes to import maps, and a careful security model plus compatibility with the existing ecosystem. <a href="#secure-modular-runtime-proposal">Skip ahead to the proposal here.</em></a>
 
@@ -52,14 +52,14 @@
 
 <blockquote class="twitter-tweet"><p lang="en" dir="ltr">how is this possible post spectre</p>&mdash; Sathya Gunasekaran (@_gsathya) <a href="https://twitter.com/_gsathya/status/1297121933004353536?ref_src=twsrc%5Etfw">August 22, 2020</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-<p>Now I admit I have fully bought in to the elegance of the the OCAP and SES models and the ideas shared by those at Agoric (who are long-time members of TC39). I gave a session on these concepts at the Node.js Collaboration summit.
+<p>Now I admit I have fully bought in to the elegance of the the OCAP, SES and compartment models, the ideas shared by those at Agoric (who are long-time members of TC39). I gave a session on these concepts at the Node.js Collaboration summit.
 
 <p>For all the tremendous benefits of the concept of modular security, there are certainly important questions, but I believe we should actively tackle this work and these questions, and not abandon the same-process modular security models unless they can be fully disproved.
 
-<a name="ses-model"></a>
-<h2><a href="#ses-model">#</a>The SES Model</h2>
+<a name="compartment-model"></a>
+<h2><a href="#compartment-model">#</a>The Compartment Model</h2>
 
-<p>The gist of the SES (<a rel=noopener target=_blank href="https://github.com/Agoric/ses-shim">Secure ECMAScript</a>) model, as proposed by Agoric, is something like the following:
+<p>The gist of the compartment model builds on top of SES (<a rel=noopener target=_blank href="https://github.com/Agoric/ses-shim">Secure ECMAScript</a>), as proposed by Agoric, something like the following:
 
 <ol>
   <li>All capabilities are imported through the module system (<code>import fetch from 'fetch'</code> kind of thing) - <em>the module resolver acts as the capability system, enforcing permissions</em>.</li>
@@ -158,7 +158,7 @@ export function renderGraph () {
 
 <p>The proposal is based on a secure runtime because that is the logical conclusion of designing security in from the start. The JavaScript ecosystem is shaped by its runtimes, and only by providing a secure runtime target can we even begin to shape the ecosystem towards more secure properties.
 
-<p>The form of the runtime is a direct implementation of the SES model:
+<p>The form of the runtime is a direct implementation of the SES compartment model:
 
 <ul>
   <li>The global object should have no capabilities (no <code>fetch</code>, <code>Worker</code>, <code>Date</code> globals), only intrinsics, with all those intrinsics provided as safe intrinsic instantiations. Instead, all capabilities are imported.
