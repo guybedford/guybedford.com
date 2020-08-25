@@ -174,7 +174,7 @@ export function renderGraph () {
 
 <p>This proposal has grown out of the idea that Node.js Policies and Import Maps have ended up converging. While in SystemJS we've needed import maps to support integrity, in Node.js we've needed Policies to support import maps-style scopes and mappings.
 
-<p>The clear technical congruence here happened completely naturally, but points to a path: <em>Import Maps are a natural home for defining the integrity of capabilities</em>. This solves the "security as afterthought" problem if we can combine goals here, since a user constructing an import map doesn't care about security, but gets it as a side-effect of the worflow itself (if they choose to enable strong capability enforcement).
+<p>The clear technical congruence here happened completely naturally, but points to a path: <em>Import Maps are a natural home for defining the integrity of capabilities</em>. This solves the "security as afterthought" problem if we can combine goals here, since a user constructing an import map doesn't care about security, but gets it as a side-effect of the workflow itself (if they choose to enable strong capability enforcement).
 
 <p>The idea is that in a capabilities model, you end up defining permissions something like:
 
@@ -189,7 +189,7 @@ export function renderGraph () {
 }
 </code></pre>
 
-<p>where a package cannot import anything outside of the package unless explicitly granted access via the capabillity system.
+<p>where a package cannot import anything outside of the package unless explicitly granted access via the capability system.
 
 <p>Yet, the import map for this same application looks something like:
 
@@ -312,7 +312,7 @@ export Fn(async getCurrentResource () => {
     <div class="blocks"><div class="align">
       <div class="block"><div class="content">
         <h2>About</h2>
-        <p>I'm a software engineer and open source contributor, currently working on <a href="http://jspm.io/">jspm.io</a> and <a href="https://github.com/systemjs/systemjs">SystemJS</a>.
+        <p>I'm a software engineer and open source contributor, currently working on <a href="http://jspm.org/">jspm</a> and <a href="https://github.com/systemjs/systemjs">SystemJS</a>.
       </div></div><div class="block"><div class="content">
         <h2>Work</h2>
         <p>I'm available for consulting work. Support or sponsorships of my projects is always welcome, feel free to get in touch.
