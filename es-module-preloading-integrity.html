@@ -27,7 +27,7 @@
 <h2><a href="#production-module-optimizations">#</a>Production Module Optimizations</h2>
 <p>When shipping ES modules in production, there are currently two major performance optimizations to apply - code splitting and preloading.</p>
 <p>Code splitting optimizations are available for native ES modules in bundlers like <a href="https://esbuild.github.io/api/#splitting" target="_blank">esbuild</a> or <a href="https://rollupjs.org/guide/en/#code-splitting" target="_blank">RollupJS</a>.
-Code splitting ensures that for any two modules that always load together, they will always inlined into the same module file as a network-optimized chunk module (or even inlined into the entry point module itself where possible).</p>
+Code splitting ensures that for any two modules that always load together, they will always be inlined into the same module file as a network-optimized chunk module (or even inlined into the entry point module itself where possible).</p>
 <p>Then preloading solves the delayed latency waterfall of module graph discovery - modules only execute after every module in the static import graph has been loaded, and modules only load after their parents have been loaded.</p>
 <a name="modulepreload"></a>
 <h2><a href="#modulepreload">#</a>modulepreload</h2>
