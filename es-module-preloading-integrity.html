@@ -38,7 +38,7 @@ Code splitting ensures that for any two modules that always load together, they 
 &lt;link rel="modulepreload" href="/src/app.js" integrity="sha384-Oe38ELlp8iio2hRyQiz2P4Drqc+ztA7jb7lONj7H3Cq+W88bloPxoZzuk6bHBHZv"/>
 &lt;link rel="modulepreload" href="/src/dependency.js" integrity="sha384-kjKb2aJJUT956WSU7Z0EF9DZyHy9gdvPOvIWbcEGATXKYxJfkEVOcuP1q20GT2LO"/>
 &lt;link rel="modulepreload" href="/src/library.js" integrity="sha384-Fwh0dF5ROSVrdd/vJOvq0pT4R6RLZOOvf6k+ijkAyUtwCP7B0E3qHy8wbot/ivfO"/>
-&lt;script type="module" src="/src/app.js">&lt;script>
+&lt;script type="module" src="/src/app.js">&lt;/script>
 </code></pre>
 <p>The waterfall is eliminated as the preloads cause <code>app.js</code>, <code>dependency.js</code> and <code>library.js</code> to now load immediately in parallel, and with integrity on all scripts we can fully secure the module execution environment.</p>
 <a name="modulepreload-polyfill"></a>
@@ -60,7 +60,7 @@ Code splitting ensures that for any two modules that always load together, they 
       fetchOpts.credentials = 'same-origin';
     fetch(link.href, fetchOpts);
   }
-  for (const link of document.querySelectorAll('link[rel=modulepreload'))
+  for (const link of document.querySelectorAll('link[rel=modulepreload]'))
     processPreload(link);
 &lt;/script>
 </code></pre>
