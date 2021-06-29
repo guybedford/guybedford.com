@@ -1,0 +1,62 @@
+{
+  "version": "https://jsonfeed.org/version/1",
+  "title": "Guy Bedford's Blog",
+  "home_page_url": "https://guybedford.com/",
+  "feed_url": "https://guybedford.com/feed.json",
+  "items": [
+    {
+      "id": "9",
+      "url": "https://guybedford.com/es-module-preloading-integrity",
+      "title": "ES Module Preloading and Integrity",
+      "content_html": "<p>Summary of preloading and content integrity for ES modules, demonstrating these features via the recent JSPM Generator updates.</p>"
+    },
+    {
+      "id": "8",
+      "url": "https://guybedford.com/secure-modular-runtimes",
+      "title": "Secure Modular Runtimes",
+      "content_html": "<p>Proposal for secure, modular, JavaScript-based runtimes</p>"
+    },
+    {
+      "id": "7",
+      "url": "https://guybedford.com/systemjs-2.0",
+      "title": "SystemJS 2.0 Release",
+      "content_html": "<p>SystemJS 2.0 major release announcement post</p>"
+    },
+    {
+      "id": "6",
+      "url": "https://guybedford.com/systemjs-alignment",
+      "title": "SystemJS 0.20 - Aligning with browser modu"h2>,
+      "content_html": "<p>An update on the release, specification changes and project directions</p>"
+    },
+    {
+      "id": "5",
+      "url": "https://guybedford.com/systemjs-mocha-istanbul",
+      "title": "Testing and coverage with SystemJS, Mocha + Ist"</h2>,
+      "content_html": "<p>A description of testing approaches in SystemJS</p>"
+    },
+    {
+      "id": "4",
+      "url": "https://guybedford.com/jspm-0.16",
+      "title": "jspm 0.16 released",
+      "content_html": "<p>Release post on the recent upgrades in jspm and SystemJS</p>"
+    },
+    {
+      "id": "3",
+      "url": "https://guybedford.com/jspm-introduction",
+      "title": "An Introduction to jspm (video)",
+      "content_html": "<p>An introduction to the jspm project and how I got involved in it</p>"
+    },
+    {
+      "id": "2",
+      "url": "https://guybedford.com/practical-workflows-for-es6-modules",
+      "title": "Practical Workflows for ES6 Modules",
+      "content_html": "<p>Some techniques for working with ES6 module syntax and loaders</p>"
+    },
+    {
+      "id": "1",
+      "title": "Using ES6 Modules Today",
+      "content_html": "<p>Polyfilling the ES6 Module Loader in browsers today</p>",
+      "url": "https://guybedford.com/es6-modules-today"
+    }
+  ]
+}

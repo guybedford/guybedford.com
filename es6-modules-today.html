@@ -4,6 +4,7 @@
   <title>Using ES6 Modules Today</title>
   <meta name="description" content="Polyfilling the ES6 Module Loader in browsers today">
   <meta name="viewport" content="width=device-width">
+  <link rel="alternate" title="Guy Bedford's Blog" type="application/json" href="https://guybedford.com/feed.json" />
 
   <link rel="stylesheet" href="style.css">
 </head>
@@ -31,14 +32,16 @@
     <h2>The ES6 Loader</h2>
 
     <p>The <a href="https://github.com/ModuleLoader/es6-module-loader" target="_blank">polyfill</a> can be included in the page with the single script tag:</p>
-    <pre><code class="html"> &lt;script src="es6-module-loader.js">&lt;/script></code></pre>
+    <pre><code class="html">
+&lt;script src="es6-module-loader.js">&lt;/script></code></pre>
 
     <p>ES6 modules simply load JavaScript files that specify dependences and exports using the <code>import</code> and <code>export</code> module syntax.<p>
 
     <p>For example, consider a widget which is dependent on jQuery.</p>
 
     <p>widget.js:</p>
-    <pre><code class="javascript">import $ from 'jquery';
+    <pre><code class="javascript">
+import $ from 'jquery';
 
 export function render(container) {
   var el = $('&lt;div class="widget">&lt;/div>');
@@ -50,14 +53,16 @@ export function render(container) {
 
     <p>To load the widget, we can use the <code>window.System</code> default loader provided by the ES6 module API, allowing us to write:</p>
 
-    <pre><code class="javascript">&lt;script>
+    <pre><code class="javascript">
+&lt;script>
   System.import('widget').then(function(widget) {
     widget.render(document.body);
   });
 &lt;/script></code></pre>
 
     <p>By default, the ES6 module loader will assume that these module names can be found at:</p>
-    <pre><code class="javascript">baseURL + '/' + moduleName + '.js'</code></pre>
+    <pre><code class="javascript">
+baseURL + '/' + moduleName + '.js'</code></pre>
 
     <p>So for this to work without any configuration we just need to ensure that we include the files <code>widget.js</code> and <code>jquery.js</code> in the same folder as our HTML page.</p>
 
@@ -74,21 +79,13 @@ export function render(container) {
     <p>The idea is that builds would be used in production, just like every other module system today, to convert modules into a single script or set of scripts that simply define the modules directly.</p>
 
     <p>These built files would be of the form:</p>
-    <pre><code class="javascript">System.set('jquery', new Module({
+    <pre><code class="javascript">
+System.set('jquery', new Module({
   'jQuery': ...
 }));</code></pre>
 
     <p>The loader can then work seamlessly between production and development, allowing only the 10KB version to be used in production. Since all current module systems need a production build, the above is not actually such a high cost.</p>
         </div>
-        <div id="disqus_thread"></div>
-        <script type="text/javascript">
-          var disqus_shortname = 'guybedford';
-          (function() {
-            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-          })();
-        </script>
       </div>
 
     <div class="push"></div>
@@ -97,10 +94,10 @@ export function render(container) {
     <div class="blocks"><div class="align">
       <div class="block"><div class="content">
         <h2>About</h2>
-        <p>I'm a software engineer and open source contributor, currently working on <a href="http://jspm.org/">jspm</a> and <a href="https://github.com/systemjs/systemjs">SystemJS</a>.
+        <p>I'm an independent software developer, TC39 delegate and core open source contributor to Node.js, RollupJS and others. Currently working on <a href="http://jspm.org/">JSPM.org</a>.
       </div></div><div class="block"><div class="content">
         <h2>Work</h2>
-        <p>I'm available for consulting work. Support or sponsorships of my projects is always welcome, feel free to get in touch.
+        <p>I'm available for consulting work. <a href="https://github.com/sponsors/guybedford">Support</a> or <a href="https://opencollective.com/jspm">sponsorships</a> of my projects is always welcome, and feel free to get in touch.
       </div></div><div class="block"><div class="content">
         <h2>Contact</h2>
         <p>Contact me via email ([first][last]@gmail.com), on <a href="https://twitter.com/guybedford">Twitter</a>, <a href="https://github.com/guybedford">GitHub</a> or <a href="http://za.linkedin.com/in/guybedford">LinkedIn</a>.

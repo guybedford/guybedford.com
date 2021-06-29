@@ -1,0 +1,177 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>ES Module Preloading &amp; Integrity</title>
+  <meta name="description" content="ES Module Preloading &amp; Integrity">
+  <meta name="viewport" content="width=device-width">
+  <link rel="alternate" title="Guy Bedford's Blog" type="application/json" href="https://guybedford.com/feed.json" />
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+      <div class="article">
+        <a class="back" href="/" target="_self">&laquo;</a>
+        <div class="article-header">
+          <h1 class="title">ES Module Preloading &amp; Integrity</h1>
+          <div class="meta">
+            <span class="author">Guy Bedford</span>
+            &sdot;
+            <span class="date">29 June 2021</span>
+          </div>
+          <div class="clear"></div>
+        </div>
+        <div class="article-body">
+<a name="production-module-optimizations"></a>
+<h2><a href="#production-module-optimizations">#</a>Production Module Optimizations</h2>
+<p>When shipping ES modules in production, there are currently two major performance optimizations to apply - code splitting and preloading.</p>
+<p>Code splitting optimizations are available for native ES modules in bundlers like <a href="https://esbuild.github.io/api/#splitting" target="_blank">esbuild</a> or <a href="https://rollupjs.org/guide/en/#code-splitting" target="_blank">RollupJS</a>.
+Code splitting ensures that for any two modules that always load together, they will always inlined into the same module file as a network-optimized chunk module (or even inlined into the entry point module itself where possible).</p>
+<p>Then preloading solves the delayed latency waterfall of module graph discovery - modules only execute after every module in the static import graph has been loaded, and modules only load after their parents have been loaded.</p>
+<a name="modulepreload"></a>
+<h2><a href="#modulepreload">#</a>modulepreload</h2>
+<p>Preloading for ES modules is provided by the <code>&lt;link rel="modulepreload" href="..."/></code> tag in browsers. There's a great article on it from the <a href="https://developers.google.com/web/updates/2017/12/modulepreload" target="_blank">Google Developers 2017 Updates</a> back when it was first shipped in Chrome.</p>
+<p>It is advisable to inject modulepreload tags for all deep dependencies whenever possible so that this entirely eliminates the latency cost of module loading, and that is the primary benefit of static preloading in the first place.</p>
+<p>Another major benefit of modulepreload is that it is currently the only mechanism to support full integrity for all loaded modules using the <code>"integrity"</code> attribute. For example if <code>app.js</code> loads <code>dependency.js</code> loads <code>library.js</code>, we can write:</p>
+<pre><code class="lang-html">
+&lt;link rel="modulepreload" href="/src/app.js" integrity="sha384-Oe38ELlp8iio2hRyQiz2P4Drqc+ztA7jb7lONj7H3Cq+W88bloPxoZzuk6bHBHZv"/>
+&lt;link rel="modulepreload" href="/src/dependency.js" integrity="sha384-kjKb2aJJUT956WSU7Z0EF9DZyHy9gdvPOvIWbcEGATXKYxJfkEVOcuP1q20GT2LO"/>
+&lt;link rel="modulepreload" href="/src/library.js" integrity="sha384-Fwh0dF5ROSVrdd/vJOvq0pT4R6RLZOOvf6k+ijkAyUtwCP7B0E3qHy8wbot/ivfO"/>
+&lt;script type="module" src="/src/app.js">&lt;script>
+</code></pre>
+<p>The waterfall is elliminated as the preloads cause <code>app.js</code>, <code>dependency.js</code> and <code>library.js</code> to now load immediately in parallel, and with integrity on all scripts we can fully secure the module execution environment.</p>
+<a name="modulepreload-polyfill"></a>
+<h2><a href="#modulepreload-polyfill">#</a>Polyfilling modulepreload</h2>
+<p>One issue with this feature is it is only implemented in Chromium browsers right now, but a polyfill can be constructed with the following code:</p>
+<pre><code class="lang-html">
+&lt;script>
+  function processPreload () {
+    const fetchOpts = {};
+    if (script.integrity)
+      fetchOpts.integrity = script.integrity;
+    if (script.referrerpolicy)
+      fetchOpts.referrerPolicy = script.referrerpolicy;
+    if (script.crossorigin === 'use-credentials')
+      fetchOpts.credentials = 'include';
+    else if (script.crossorigin === 'anonymous')
+      fetchOpts.credentials = 'omit';
+    else
+      fetchOpts.credentials = 'same-origin';
+    fetch(link.href, fetchOpts);
+  }
+  for (const link of document.querySelectorAll('link[rel=modulepreload'))
+    processPreload(link);
+&lt;/script>
+</code></pre>
+<p>Furthermore, if we want to add dynamic preload support to this polyfill, then we can use mutation observers:</p>
+<pre><code class="lang-javascript">
+new MutationObserver(mutations => {
+  for (const mutation of mutations) {
+    if (mutation.type !== 'childList') continue;
+    for (const node of mutation.addedNodes) {
+      if (node.tagName === 'LINK' && node.rel === 'modulepreload')
+        processPreload(node);
+    }
+  }
+}).observe(document, { childList: true, subtree: true });
+</code></pre>
+<p>This won't polyfill deep dependency preloading, but covers the majority use case and enables <code>"integrity"</code> checks in all modules browsers by priming the internal integrity map.</p>
+<p>In this way we can get full preload and integrity support in production modules environments in all browsers.</p>
+<p>The above polyfill is included in the latest 0.12.1 release of <a href="https://github.com/guybedford/es-module-shims" target="_blank">ES Module Shims</a>, which provides a combination of polyfills for various ES modules features, particularly for import maps.</p>
+
+<a name="integrity-limitations"></a>
+<h2><a href="#integrity-limitations">#</a>Integrity Limitations</h2>
+
+<p>A major issue with using modulepreload as the primary integrity approach is there is no easy way to provide integrity upfront for lazy loaded modules without preloading them immediately. For production workflows today, the best approach would be
+to construct a custom dynamic import wrapper that lazily injects preloads just before triggering dynamic import.</p>
+
+<p>That is a lot of work though and the friction is likely so prohibitive I'd be surprised if anyone is even shipping an approach like this. Yet module integrity is an <em>absolutely crucial feature for using ES module CDNs</em>.</p>
+
+<p>Future specifications that interact with module preloading and integrity include:</p>
+
+<ul>
+  <li>
+    <p><strong>Import assertions:</strong> An <code>import 'mod' assert { integrity: '...' }</code> syntax has been suggested but is not yet specified or implemented for import assertions.</p>
+    <p>Unfortunately this feature suffers from the issue that it undoes the primary performance benefit of import maps in allowing all modules in a graph to be independently cached with far-future expires. So while it is useful for certain specific cases, as a general solution to this problem it would be a step backwards.</p>
+  </li>
+  <li>
+    <p><strong>Import Map Integrity:</strong> I have suggested an <a href="https://github.com/guybedford/import-maps-extensions#integrity" target="_blank">integrity attribute specification</a> for import maps, allowing them to act as the point of orchestration here. The difficulty here is getting buy-in from browsers, which has been unsuccessful so far.</p>
+  </li>
+  <li>
+    <p><strong>Milestones:</strong> This is an experimental performance approach with a current <a href="https://docs.google.com/document/d/15k6sLw3hscfsD1BD51FJ_qWLIOVziS33a3Ld-kB-G3w/edit#" target="_blank">Proposal Doc</a> and <a href="https://groups.google.com/a/chromium.org/g/blink-reviews-html/c/NmVo6GbORkg" target="_blank">Chrome CL</a> designed to allow specifying something about the conditions under which a script should be loaded for more fine-grained loading optimization. Unfortunately there are <a href="https://lists.w3.org/Archives/Public/public-whatwg-archive/2013Aug/0277.html" target="_blank">currently no plans to support this feature for preloads</a> so that means it cannot in its current form solve the problem of deep graph content integrity with lazy module loading.</p>
+  </li>
+  <li>
+    <p><strong>Lazy Preloads:</strong> Another design might be to have an attribute on a preload tag to indicate that it should not be preloaded, but its integrity value should still apply. I <a href="https://lists.w3.org/Archives/Public/public-webappsec/2021Mar/0002.html">suggested this on WebAppSec</a> but it seems there is confusion in the combination of preloading and integrity here.</p>
+  </li>
+  <li>
+    <p><strong>Web Bundles:</strong> <a href="https://github.com/WICG/resource-bundles/blob/main/faq.md#q-how-does-this-proposal-relate-to-sub-resource-integrity-sri">From the FAQ</a>, it seems like the current state of integrity for Web Bundles it is being treated as a follow-up proposal due to the high bandwidth cost of hash verification.</p>
+  </li>
+</ul>
+
+<p>Perhaps the concept of generalized module integrity folds into a centralized integrity manifest for the web, possibly combined along with other permissions / security features in a security manifest.</p>
+
+<p>Further, ideally such integrity schemes wouldn't even specify per-resource integrity at all, since is actually quite inefficient due to the high bandwidth involved. Instead verification could benefit from the breadth of approaches we have for optimized integrity including merkle trees or even something more exotic like a <a href="https://vitalik.ca/general/2021/06/18/verkle.html" target="_blank">Verkle Tree</a>.</p>
+
+<a name="call-to-action"></a>
+<h2><a href="#call-to-action">#</a>Call to Action</h2>
+
+<p>The basic principle that one should be able to visit a website on the internet with all executed code being verified against an integrity hash is an absolutely fundamental security property.</p>
+
+<p>Getting this done well and optimially will require some novel work and we need to actively engage with browser vendors and standards bodies to ensure that this security property can be fully and easily enabled for the future web platform without friction.</p>
+
+<a name="jspm-generator-preloading"></a>
+<h2><a href="#jspm-generator-preloading">#</a>JSPM Generator Preloading</h2>
+<p><a href="https://github.com/jspm/generator" target="_blank">JSPM Generator</a> is a low-level tool I've been working on for generating import maps against module CDNs or local package paths. The latest version now includes support for static tracing
+of module dependencies allowing for <a href="https://github.com/jspm/generator#module-preloading">constructing these preload tags for module graphs</a>. Work on refining these generator APIs and workflows is ongoing.</p>
+
+<p>Support for these features is also included in the <a href="https://generator.jspm.io">Online Generator</a> for JSPM.io, by toggling the "Preload" and "Integrity" boxes at the top right of the application.</p>
+<p>Here's a demonstration of that in action, toggling preloading for separate CDN dependencies:</p>
+
+<img src="/jspm-generator-preload.gif" width=150% style="margin-left:-25%"/>
+
+
+</code></pre>
+
+        </div>
+      </div>
+    <div class="push"></div>
+  </div>
+  <div class="footer">
+    <div class="blocks"><div class="align">
+      <div class="block"><div class="content">
+        <h2>About</h2>
+        <p>I'm an independent software developer, TC39 delegate and core open source contributor to Node.js, RollupJS and others. Currently working on <a href="http://jspm.org/">JSPM.org</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Work</h2>
+        <p>I'm available for consulting work. <a href="https://github.com/sponsors/guybedford">Support</a> or <a href="https://opencollective.com/jspm">sponsorships</a> of my projects is always welcome, and feel free to get in touch.
+      </div></div><div class="block"><div class="content">
+        <h2>Contact</h2>
+        <p>Contact me via email ([first][last]@gmail.com), on <a href="https://twitter.com/guybedford">Twitter</a>, <a href="https://github.com/guybedford">GitHub</a> or <a href="http://za.linkedin.com/in/guybedford">LinkedIn</a>.
+    </div></div>
+  </div>
+  <script>
+    Array.prototype.forEach.call(document.querySelectorAll('code.javascript, code.lang-javascript, code.html, code.lang-html'), function(code) {
+      code.innerHTML = code.innerHTML
+        .replace(/\/\/(.*)/gm, '<span class="comment">//$1</span>')
+        .replace(/('[^']*')/gm, '<span class="string">$1</span>')
+        .replace(/([^#\d])(\d+)/gm, '$1<span class="number">$2</span>')
+        .replace(/([^\.])(for|function|new|throw|return|var|if|else|true|false|this|import|export class|export|from)\b/gm, '$1<span class="keyword">$2</span>');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('a'), function(a) {
+      if ((a.getAttribute('href') || '#').substr(0, 1) != '#' && !a.getAttribute('target'))
+        a.setAttribute('target', '_blank');
+    });
+  </script>
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-16744385-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+</body>
+</html>
