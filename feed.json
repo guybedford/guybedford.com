@@ -1,6 +1,6 @@
 {
   "version": "https://jsonfeed.org/version/1",
-  "title": "Guy Bedford's Blog",
+  "title": "Guy Bedford’s Blog",
   "home_page_url": "https://guybedford.com/",
   "feed_url": "https://guybedford.com/feed.json",
   "items": [
@@ -8,55 +8,66 @@
       "id": "9",
       "url": "https://guybedford.com/es-module-preloading-integrity",
       "title": "ES Module Preloading and Integrity",
-      "content_html": "<p>Summary of preloading and content integrity for ES modules, demonstrating these features via the recent JSPM Generator updates.</p>"
+      "content_html": "<p>Summary of preloading and content integrity for ES modules, demonstrating these features via the recent JSPM Generator updates.</p>",
+      "date_published": "2021-06-29T20:44:52.361Z"
     },
     {
       "id": "8",
       "url": "https://guybedford.com/secure-modular-runtimes",
       "title": "Secure Modular Runtimes",
-      "content_html": "<p>Proposal for secure, modular, JavaScript-based runtimes</p>"
+      "content_html": "<p>Proposal for secure, modular, JavaScript-based runtimes</p>",
+      "date_published": "2020-08-24T07:00:00.000Z"
     },
     {
       "id": "7",
       "url": "https://guybedford.com/systemjs-2.0",
       "title": "SystemJS 2.0 Release",
-      "content_html": "<p>SystemJS 2.0 major release announcement post</p>"
+      "content_html": "<p>SystemJS 2.0 major release announcement post</p>",
+      "date_published": "2018-09-28T07:00:00.000Z"
     },
     {
       "id": "6",
       "url": "https://guybedford.com/systemjs-alignment",
       "title": "SystemJS 0.20 - Aligning with browser modules",
-      "content_html": "<p>An update on the release, specification changes and project directions</p>"
+      "content_html": "<p>An update on the release, specification changes and project directions</p>",
+      "date_published": "2017-01-24T08:00:00.000Z"
     },
     {
       "id": "5",
       "url": "https://guybedford.com/systemjs-mocha-istanbul",
       "title": "Testing and coverage with SystemJS, Mocha + Istanbul",
-      "content_html": "<p>A description of testing approaches in SystemJS</p>"
+      "content_html": "<p>A description of testing approaches in SystemJS</p>",
+      "date_published": "2016-06-17T07:00:00.000Z"
     },
     {
       "id": "4",
       "url": "https://guybedford.com/jspm-0.16",
       "title": "jspm 0.16 released",
-      "content_html": "<p>Release post on the recent upgrades in jspm and SystemJS</p>"
+      "content_html": "<p>Release post on the recent upgrades in jspm and SystemJS</p>",
+      "date_published": "2015-08-18T07:00:00.000Z"
     },
     {
       "id": "3",
       "url": "https://guybedford.com/jspm-introduction",
       "title": "An Introduction to jspm (video)",
-      "content_html": "<p>An introduction to the jspm project and how I got involved in it</p>"
+      "content_html": "<p>An introduction to the jspm project and how I got involved in it</p>",
+      "date_published": "2014-04-22T07:00:00.000Z"
     },
     {
       "id": "2",
       "url": "https://guybedford.com/practical-workflows-for-es6-modules",
       "title": "Practical Workflows for ES6 Modules",
-      "content_html": "<p>Some techniques for working with ES6 module syntax and loaders</p>"
+      "content_html": "<p>Some techniques for working with ES6 module syntax and loaders</p>",
+      "date_published": "2014-04-06T07:00:00.000Z",
+      "date_modified": "2014-07-20T07:00:00.000Z"
     },
     {
       "id": "1",
       "title": "Using ES6 Modules Today",
       "content_html": "<p>Polyfilling the ES6 Module Loader in browsers today</p>",
-      "url": "https://guybedford.com/es6-modules-today"
+      "url": "https://guybedford.com/es6-modules-today",
+      "date_published": "2013-06-26T07:00:00.000Z",
+      "date_modified": "2014-02-16T08:00:00.000Z"
     }
   ]
 }
