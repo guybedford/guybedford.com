@@ -25,13 +25,13 @@
     {
       "id": "6",
       "url": "https://guybedford.com/systemjs-alignment",
-      "title": "SystemJS 0.20 - Aligning with browser modu"h2>,
+      "title": "SystemJS 0.20 - Aligning with browser modules",
       "content_html": "<p>An update on the release, specification changes and project directions</p>"
     },
     {
       "id": "5",
       "url": "https://guybedford.com/systemjs-mocha-istanbul",
-      "title": "Testing and coverage with SystemJS, Mocha + Ist"</h2>,
+      "title": "Testing and coverage with SystemJS, Mocha + Istanbul",
       "content_html": "<p>A description of testing approaches in SystemJS</p>"
     },
     {
