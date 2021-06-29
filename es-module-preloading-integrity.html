@@ -40,7 +40,7 @@ Code splitting ensures that for any two modules that always load together, they 
 &lt;link rel="modulepreload" href="/src/library.js" integrity="sha384-Fwh0dF5ROSVrdd/vJOvq0pT4R6RLZOOvf6k+ijkAyUtwCP7B0E3qHy8wbot/ivfO"/>
 &lt;script type="module" src="/src/app.js">&lt;script>
 </code></pre>
-<p>The waterfall is elliminated as the preloads cause <code>app.js</code>, <code>dependency.js</code> and <code>library.js</code> to now load immediately in parallel, and with integrity on all scripts we can fully secure the module execution environment.</p>
+<p>The waterfall is eliminated as the preloads cause <code>app.js</code>, <code>dependency.js</code> and <code>library.js</code> to now load immediately in parallel, and with integrity on all scripts we can fully secure the module execution environment.</p>
 <a name="modulepreload-polyfill"></a>
 <h2><a href="#modulepreload-polyfill">#</a>Polyfilling modulepreload</h2>
 <p>One issue with this feature is it is only implemented in Chromium browsers right now, but a polyfill can be constructed with the following code:</p>
@@ -88,7 +88,7 @@ to construct a custom dynamic import wrapper that lazily injects preloads just b
 
 <p>That is a lot of work though and the friction is likely so prohibitive I'd be surprised if anyone is even shipping an approach like this. Yet module integrity is an <em>absolutely crucial feature for using ES module CDNs</em>.</p>
 
-<p>Future specifications that interact with module preloading and integrity include:</p>
+<p>Possible future specifications that might interact with module preloading and integrity include:</p>
 
 <ul>
   <li>
@@ -118,7 +118,7 @@ to construct a custom dynamic import wrapper that lazily injects preloads just b
 
 <p>The basic principle that one should be able to visit a website on the internet with all executed code being verified against an integrity hash is an absolutely fundamental security property.</p>
 
-<p>Getting this done well and optimially will require some novel work and we need to actively engage with browser vendors and standards bodies to ensure that this security property can be fully and easily enabled for the future web platform without friction.</p>
+<p>Getting this done well and optimally will require some novel work and we need to actively engage with browser vendors and standards bodies to ensure that this security property can be fully and easily enabled for the future web platform without friction.</p>
 
 <a name="jspm-generator-preloading"></a>
 <h2><a href="#jspm-generator-preloading">#</a>JSPM Generator Preloading</h2>
@@ -130,8 +130,7 @@ of module dependencies allowing for <a href="https://github.com/jspm/generator#m
 
 <img src="/jspm-generator-preload.gif" width=150% style="margin-left:-25%"/>
 
-
-</code></pre>
+<p>Production modules workflows have come a far way!</p>
 
         </div>
       </div>
