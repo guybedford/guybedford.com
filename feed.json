@@ -9,49 +9,56 @@
       "url": "https://guybedford.com/es-module-preloading-integrity",
       "title": "ES Module Preloading and Integrity",
       "content_html": "<p>Summary of preloading and content integrity for ES modules, demonstrating these features via the recent JSPM Generator updates.</p>",
-      "date_published": "2021-06-29T20:44:52.361Z"
+      "date_published": "2021-06-29T20:44:52.361Z",
+      "date_modified": "2021-06-30T14:21:38.709Z"
     },
     {
       "id": "8",
       "url": "https://guybedford.com/secure-modular-runtimes",
       "title": "Secure Modular Runtimes",
       "content_html": "<p>Proposal for secure, modular, JavaScript-based runtimes</p>",
-      "date_published": "2020-08-24T07:00:00.000Z"
+      "date_published": "2020-08-24T07:00:00.000Z",
+      "date_modified": "2020-08-24T07:00:00.000Z"
     },
     {
       "id": "7",
       "url": "https://guybedford.com/systemjs-2.0",
       "title": "SystemJS 2.0 Release",
       "content_html": "<p>SystemJS 2.0 major release announcement post</p>",
-      "date_published": "2018-09-28T07:00:00.000Z"
+      "date_published": "2018-09-28T07:00:00.000Z",
+      "date_modified": "2018-09-28T07:00:00.000Z"
     },
     {
       "id": "6",
       "url": "https://guybedford.com/systemjs-alignment",
       "title": "SystemJS 0.20 - Aligning with browser modules",
       "content_html": "<p>An update on the release, specification changes and project directions</p>",
-      "date_published": "2017-01-24T08:00:00.000Z"
+      "date_published": "2017-01-24T08:00:00.000Z",
+      "date_modified": "2017-01-24T08:00:00.000Z"
     },
     {
       "id": "5",
       "url": "https://guybedford.com/systemjs-mocha-istanbul",
       "title": "Testing and coverage with SystemJS, Mocha + Istanbul",
       "content_html": "<p>A description of testing approaches in SystemJS</p>",
-      "date_published": "2016-06-17T07:00:00.000Z"
+      "date_published": "2016-06-17T07:00:00.000Z",
+      "date_modified": "2016-06-17T07:00:00.000Z"
     },
     {
       "id": "4",
       "url": "https://guybedford.com/jspm-0.16",
       "title": "jspm 0.16 released",
       "content_html": "<p>Release post on the recent upgrades in jspm and SystemJS</p>",
-      "date_published": "2015-08-18T07:00:00.000Z"
+      "date_published": "2015-08-18T07:00:00.000Z",
+      "date_modified": "2014-04-22T07:00:00.000Z"
     },
     {
       "id": "3",
       "url": "https://guybedford.com/jspm-introduction",
       "title": "An Introduction to jspm (video)",
       "content_html": "<p>An introduction to the jspm project and how I got involved in it</p>",
-      "date_published": "2014-04-22T07:00:00.000Z"
+      "date_published": "2014-04-22T07:00:00.000Z",
+      "date_modified": "2014-04-22T07:00:00.000Z"
     },
     {
       "id": "2",
