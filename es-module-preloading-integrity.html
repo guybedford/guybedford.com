@@ -18,7 +18,7 @@
           <div class="meta">
             <span class="author">Guy Bedford</span>
             &sdot;
-            <span class="date">29 June 2021</span>
+            <span class="date">29 June 2021 (revised 18 August 2021)</span>
           </div>
           <div class="clear"></div>
         </div>
@@ -58,12 +58,13 @@ Code splitting ensures that for any two modules that always load together, they 
       fetchOpts.credentials = 'omit';
     else
       fetchOpts.credentials = 'same-origin';
-    fetch(link.href, fetchOpts);
+    fetch(link.href, fetchOpts).then(res => res.ok && res.arrayBuffer());
   }
   for (const link of document.querySelectorAll('link[rel=modulepreload]'))
     processPreload(link);
 &lt;/script>
 </code></pre>
+<p><em>It is important to ensure that the fetch call immediately reads the response to completion to avoid possible race conditions that can result in double network fetches, per the <code>.then(res => res.ok && res.arrayBuffer())</code> above.</em></p>
 <p>Furthermore, if we want to add dynamic preload support to this polyfill, then we can use mutation observers:</p>
 <pre><code class="lang-javascript">
 new MutationObserver(mutations => {
