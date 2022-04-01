@@ -18,7 +18,7 @@ strong {
   font-size: 1em;
 }
 .container {
-  width: 40em;
+  width: 50em;
   margin-left: auto;
   margin-right: auto;
   
@@ -26,6 +26,13 @@ strong {
   height: auto !important;
   height: 100%;
   margin: 0 auto -200px;
+}
+figcaption {
+  text-align: center;
+  margin-top: -1em;
+  font-size: 0.9em;
+  font-style: italic;
+  line-height: 1.5em;
 }
 .back {
   font-size: 3.5em;
@@ -69,7 +76,7 @@ blockquote {
   color: #444;
 }
 li {
-  margin: 1em 0;
+  margin: 0.5em 0;
 }
 ul, ol {
   margin: 1.5em;
@@ -118,7 +125,7 @@ h2 a, h3 a {
 .article-body {
   padding-bottom: 2em;
 }
-.article-body h1, .article-body h2, .article-body h3 {
+.article-body h1, .article-body h2, .article-body h3, .article-body h4 {
   margin: 3em 0 1em 0;
 }
 .listing {
@@ -164,12 +171,13 @@ code {
   padding: 0.2em;
   color: #333;
 }
-code .comment, code .comment .keyword {
+code .comment, code .comment .keyword, code .comment .string, code .comment .string .keyword {
   color: #494;
   font-weight: 100;
 }
-code .string, code .string .comment {
+code .string, code .string .comment, code .string .keyword {
   color: #BE1717;
+  font-weight: 100;
 }
 code .keyword {
   font-weight: bold;

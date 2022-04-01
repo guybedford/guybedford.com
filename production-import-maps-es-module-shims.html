@@ -1,0 +1,439 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>How ES Module Shims became a Production Import Maps Polyfill</title>
+  <meta name="description" content="An overview of the architecture, polyfill details and performance of ES Module Shims">
+  <meta name="viewport" content="width=device-width">
+  <link rel="alternate" title="Guy Bedford's Blog" type="application/json" href="https://guybedford.com/feed.json" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:creator" content="@guybedford" />
+  <meta property="og:url" content="https://guybedford.com/production-import-maps-es-module-shims" />
+  <meta property="og:title" content="How ES Module Shims went from toy project to prodution import maps polyfill" />
+  <meta property="og:description" content="An overview of the architecture, polyfill details and performance of ES Module Shims" />
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+      <div class="article">
+        <a class="back" href="/" target="_self">&laquo;</a>
+        <div class="article-header">
+          <h1 class="title">How ES Module Shims became a Production Import Maps Polyfill</h1>
+          <div class="meta">
+            <span class="author">Guy Bedford</span>
+            &sdot;
+            <span class="date">1 April 2022</span>
+          </div>
+          <div class="clear"></div>
+        </div>
+        <div class="article-body">
+<p><a rel="noreferrer noopener" href="https//github.com/guybedford/es-module-shims">ES Module Shims</a> started out as a way to use new native modules features on the web (like <a rel="noopener noreferrer" href="https://github.com/wicg/import-maps">import maps</a>) before they were released in browsers, in a way that could be suitable for fast development or simple production workflows.
+  
+<p>Over time it has turned into a highly optimized production-suitable drop-in polyfill for import maps.
+
+<p>It's an interesting project architecturally so I wanted to first share some background on how the <a href="#loader-architecture">project architecture</a> works, how the <a href="#polyfill-mode">polyfill mode</a> works, and then dig into the details of its <a href="#performance">performance</a> and what might be on the <a href="#project-future">future</a> horizon for the project.
+
+<p><em>Thank you to <a rel="noopener noreferrer" href="https://basecamp.com/">Basecamp</a> for seeing the potential of the project and sponsoring new performance investigation work on ES Module Shims, and to Rich Harris for the original inspiration for the project.</em></p>
+
+<a name="loader-architecture"></a>
+<h2>Loader Architecture</h2>
+
+<p>At its core ES Module Shims is a module loader. While script evaluation can be implemented as a simple one-argument <code class="lang-javascript">eval()</code>function, setting up a module loader is more complex. Modular evaluation requires the machinery for providing a module source, supporting dependency discovery and resolution from that source, then providing sources for those dependencies asynchronously in turn and continuing the process iteratively.
+
+<p>It doesn't help that there is no modular evaluation API on the web, at all. At the time ES Module Shims was created in 2018, all major browsers supported <code class="lang-html">&lt;script type="module"></code>, but support for other features like dynamic <code class="lang-javascript">import()</code> or <code class="lang-javascript">import.meta.url</code> was still inconsistent.
+
+<p>To implement a feature like import maps requires customizing the module dependency resolution, so one needs some kind of loader hook to achieve this.
+
+<p><strong>The initial problem for ES Module Shims was</strong>: <em>How can we construct an arbitrary module loader with custom dependency and source text resolution on top of <code class="lang-html">&lt;script type="module"></code>?</em>
+
+<p>Achieving this isn't necessarily obvious but is made possible by two techniques:
+<ol>
+  <li>A small & fast module lexer
+  <li>Source customization via <code>Blob</code> URLs
+</ol>
+
+<a name="small-fast-js-module-lexer"></a>
+<h3>1. A small & fast JS module lexer</h3>
+
+<p>Given an arbitrary source text string, <code>source</code>, the first problem is to determine its import specifier positions.
+
+<p>For a <code>source</code> like
+
+<pre><code>
+<span class="keyword">const</span> source = 
+<span class="string">`import { dep } from 'dep';
+console.log(dep, mapped);`</span>;
+</code></pre>
+
+<p>we have an import <code class="lang-javascript">'dep'</code> at position <code>[21, 28]</code> in the source string.
+
+<p>If we can determine the import positions, we can resolve those imports then use those same offsets to rewrite the source string via string manipulation:
+
+<pre><code class="lang-javascript">
+const transformed = source.slice(0, 21) + '/dep-resolved.js' + source.slice(28);
+</code></pre>
+
+<p>To then get:
+
+<pre><code class="lang-javascript">
+import { dep } from '/dep-resolved.js';
+
+console.log(dep, mapped);
+</code></pre>
+
+<a name="how-to-write-an-imports-lexer"></a>
+<h4>How to write an imports lexer?</h4>
+
+<p>If JS had been specified such that imports could only appear before other types of JS statements, then there would be no problem here. The issue is that the following is valid JavaScript:
+
+<pre><code>
+<span class="keyword">const</span> someText = <span class="string">`import 'not an import'`</span>;
+
+<span class="comment">// import 'also not an import'</span>;
+
+<span class="string">'asdf'</span>.match(/import 'you guessed it'/);
+
+<span class="keyword">import</span> <span class="string">'oh dear'</span>;
+</code></pre>
+
+<p>The above probably seem like silly edge cases, but when dealing with properly solving a problem for all cases, the edge cases have to be the focus.
+
+<p>While there are various import regular expressions that could be used to determine the import specifier positions, it's just not a reliable foundation to have for such a project since the problem with using a regex is that it cannot handle the language syntax edge cases consistently - one would always hit some module down the road that would fail analysis, breaking the entire workflow of reliably implementing a modular evaluation.
+  
+<p>The other alternative would be to use a parser, but even the smallest parser at the time was over 100KB and not without significant performance overhead for this kind of use case.
+
+<a name="rich-harris-inspired-magic"></a>
+<h4>Rich-Harris-Inspired Magic</h4>
+
+<p>When Rich Harris released <a rel="noopener noreferrer" href="https://github.com/Rich-Harris/shimport" target="_blank">Shimport</a> (in what I imagine as a spurt of idle creativity over a couple of hours one weekend, before he moved on to building Svelte the next weekend), it demonstrated in-browser dependency analysis with a small and highly efficient JavaScript lexer suitable for quick development or even simple production workflows, something I never believed would have been possible.
+  
+<p>Shimport uses a custom lexer to dynamically rewrite ES modules in the browser to support them in browsers without ES modules support.
+
+<p>Where Shimport reinterprets all imports and exports, the problem of just parsing imports and rewriting their inner strings seemed simple in comparison, and by using native modules live module bindings would naturally be supported.
+
+<p>Swapping notes with Rich over how to deal with the intricacies of the JS language, he shared the gist of the technique in handling one of the main concerns of writing a JS lexer without deeper parser knowledge - the regex division operator ambiguity problem. 
+
+<a name="division-regular-expressions-ambiguity"></a>
+<h4>Division Regular Expression Ambiguity</h4>
+
+<p>For most JS lexing the rules are quite simple - for a string you read from the first <code>"</code> to the last, handling escaping. Comments (<code>/*</code> and <code>//</code>) also follow a simple rule. Template expressions (<code>`..${`..`}..`</code>) have some nesting to deal with handled by nesting the parser function and regular expressions have some minor cases to check. Apart from that one can pretty much just match opening <code>[</code>, <code>(</code> and <code>{</code> to their closing versions without much further parser context necessary.
+
+<p>Then if all the braces and parens are closed, we know we are at the top level, and we can start parsing imports using their grammar parser rules only to get a small module lexer.
+  
+<p>But as soon as you hit a <code>/</code> there's a lexer ambiguity problem. For example:
+
+<pre><code class="lang-javascript">
+while (items.length) /regexp/.test(items.pop()) || error();
+</code></pre>
+
+<p>What distinguishes the <code>/</code> as being a regex and not a division in the above is that the brace is the end of a <code><span class="keyword">while</span></code> statement, but to know that requires complete parser knowledge of the while statement parser state.
+
+<p>The trick then is to create a minimal lexer context stack that matches opening and closing braces or parens with just enough state information to handle the major ambiguity cases like the above.
+
+<p>Determining if the parser is in an expression position for a dynamic <code>import()</code> (which otherwise could also be ambiguous with class method definition) can be handled in a similar way with a minimal lexer context associated with the brace and paren stack.
+
+<p>Initially implemented as an embedded JS-based lexer in ES Module Shims, the implementation was later converted into C and compiled with WebAssembly (C compiles to one of the smallest Wasm outputs) for even further performance benefits (mostly cold start benefits actually, V8 isn't free!) and became the <a rel="noopener noreferrer" href="http://npmjs.com/package/es-module-lexer">es-module-lexer</a> project.
+  
+<p>To give an idea of the performance, the whole project is a <a rel="noopener noreferrer" href="https://unpkg.com/es-module-lexer@0.10.0/dist/lexer.js">4.5KB JS file</a> that can analyze 1MB of JS code in under 10ms on most desktops with the performance roughly scaling linearly. It's become a popular npm package with over 7.5 million downloads a week. There's a lot of value to be found in sharing a good solution to a common problem.
+
+<a name="source-cusomization-via-blob-urls"></a>
+<h3>2. Source customization via <code>Blob</code> URLs</h3>
+
+<p><a href="https://developer.mozilla.org/en-US/docs/Web/API/Blob"><code>Blob</code></a> URLs can be used with dynamic <code class="lang-javascript">import()</code> to execute arbitrary module sources:
+
+<pre><code class="lang-javascript">
+const blob = new Blob([
+  "export const itsAModule = true"
+], { type : 'text/javascript' });
+
+const blobUrl = URL.createObjectURL(blob);
+
+const { itsAModule } = await import(blobUrl);
+console.log(itsAModule); // true!
+</code></pre>
+
+<p>In browsers without dynamic import support, the same could be achieved by dynamically injecting a <code class="lang-html">&lt;script type="module">import 'blob:...'&lt;script></code> tag into the DOM.
+
+<p>With all the pieces in place, to consider handling an entire module graph, say we have an application like:</p>
+
+<pre><code class="lang-html">
+&lt;script type="importmap">
+{
+  "imports": {
+    "dep": "/dep.js"
+  }
+}
+&lt;/script>
+&lt;script type="module" src="./app.js">&ls;/script>
+</code></pre>
+
+<p>Where <code class="lang-javascript">'/app.js'</code> contains:
+  
+<pre><code class="lang-html">
+import depA from 'dep';
+
+export default ...
+</code></pre>
+
+<p>importing <code class="lang-javascript">'dep'</code> which resolves in the import map to <code class="lang-javascript">'/dep.js'</code></p>
+
+<p>If we rewrite or customize the source for <code class="lang-javascript">'/dep.js'</code>, we get a blob URL for <code class="lang-javascript">'dep'</code>, which must then be written into its corresponding import position in <code class="lang-javascript">'/app.js'</code> above. We then create a blob URL from this transformed <code>app.js</code> source and finally import that blob dynamically.</p>
+
+<img style="width:55em;margin-left:-2.5em;" alt="ES Module Shims process" src="esms-process.svg" />
+
+<p>The final <code class="lang-javascript">import('blob:site.com/72ac72b2-8106')</code> then fully captures the entire graph execution of <code>app.js</code>, making ES Module Shims a comprehensive <a rel="noopener noreferrer" href="https://github.com/guybedford/es-module-shims#resolve-hook">customizable</a> loader on top of baseline native modules in browsers (barring some minor fudging of <a rel="noopener noreferrer" href="https://github.com/guybedford/es-module-shims#implementation-details">live bindings in cycles</a>).
+
+<a name="shim-mode"></a>
+<h3>Shim Mode</h3>
+
+<p>The original implementation was to use custom <code>module-shim</code> and <code>importmap-shim</code> script types:
+
+<pre><code class="lang-html">
+&lt;script type="importmap-shim">
+{
+  "imports": {
+    "dep": "/packages/dep/main.js"
+  }
+}
+&lt;/script>
+&lt;script type="module-shim">
+import dep from 'dep';
+console.log(dep);
+&lt;/script>
+</code></pre>
+
+<p>This would guarantee no conflicts with the native loader, with ES Module Shims using <code>fetch()</code> to process dependencies and then lazily rewrite the sources using es-module-lexer before inlining them as <code>Blob</code> URLs.
+
+<a name="polyfill-mode"></a>
+<h2>Polyfill Mode</h2>
+
+<p>In March 2021, Chrome shipped unflagged support for import maps. It then became an appealing prospect to use a full native import maps workflow, having ES Module Shims only apply when needed in browsers without import maps support.
+
+<p>When using import maps in unsupported browsers, a static error is thrown:</p>
+
+<div style="text-align: center"><img style="height: 3em;" alt="ES Module Shims process" src="bare-specifier-error.png" /></div>
+
+<p>Since this is a static error (happening at link time, not a dynamic error at execution time), no modules will be executed at all. As a result, it is possible for ES Module Shims to executing the module itself through its own loader only when it fails native execution, and there would be no risk of duplicate execution. Depending on the browser, the fetch cache can be shared as well.
+
+<p>The polyfill pattern in ES Module Shims then becomes one of re-executing static failures. As long you are statically using the features that you want polyfilled, in a way that would always result in a static error in unsupported browsers, ES Module Shims will detect that and run the modules through its loader to polyfill.
+
+<p>Further, in browsers with comprehensive import maps support (or whatever baseline modules features are the current new hotness), there would be no need for ES Module Shims to even analyze the sources at all enabling a complete <em>baseline passthrough</em>.</p>
+
+<p>The polyfill mode handling involves the following steps:
+
+<ol>
+  <li>Run feature detections for import maps and related modules features.
+  <li>If the browser supports all the modern features, nothing further needs to be done.
+  <li>Analyze the module sources through the loader fetch and lexer tracing, and determine if any of them use unsupported native features that would statically throw.
+  <li>If the module has been determined to have statically thrown based on the source analysis, go ahead and execute the module graph in the ES Module Shims loader.
+</ol>
+
+<p><a rel="noreferrer noopener" href="https://caniuse.com/import-maps">69% of users</a> hit the fast path where the browser already supports import maps, where ES Module Shims basically does zero work apart from feature detections.</p>
+
+<p>And as a result, polyfill mode ends up being a highly performant approach to polyfilling modules features for older browsers only.
+
+<p>The simplest workflow then is just to use an import map from the start:</p>
+
+<pre><code class="lang-html">
+&lt;script async src="https://ga.jspm.io/npm:es-module-shims@1.5.2/dist/es-module-shims.js">&lt;/script>
+&lt;script type="importmap">
+{
+  "imports": {
+    "app": "/app/main.js"
+  }
+}
+&lt;/script>
+&lt;script type="module">import 'app'&lt;/script>
+</code></pre>
+
+<p>By using an import map straight away, the immediate error in browsers without native support avoids unnecessary browser processing and ensures a clean polyfill switch.</p>
+
+<a name="performance"></a>
+<h2>Performance</h2>
+
+<p>To verify the performance, <a rel="noopener noreferrer" href="https://basecamp.com/">Basecamp</a> sponsored some benchmarking and optimization work on ES Module Shims.
+
+<p>The goals of the performance work for ES Module Shims were to verify:</p>
+
+<ul>
+  <li><a href="#baseline-passthrough-performance">Baseline passthrough</a>: In browsers with import maps support, performance is exactly in line with native loading.</li>
+  <li><a href="#polyfill-performance">Polyfill performance</a>: To quantify the polyfill loading cost in browsers without import maps support.</li>
+  <li><a href="#import-maps-performance">Import maps performance</a>: To investigate the performance of large import maps with many modules.</li>
+</ul>
+
+<a name="benchmark-setup"></a>
+<h3>Benchmark Setup</h3>
+
+<p>All of the performance tests use a simple component rendering using Preact, and include the full load time of the page. Each sample <code>n</code> includes a component and Preact loading and executing, and thus corresponds to the comprehensive execution of ~10KB of JS code loading and interacting with the DOM. By <code>n = 100</code>, 1MB of code is being loaded and executed (10KB per sample). All scenarios below are based on uncached performance with varied network settings as descibed per case.</p>
+
+<p>The benchmark results and code are available on the <a rel="noreferrer noopener" href="https://github.com/guybedford/es-module-shims/tree/main/bench">ES Module Shims repo</a>. Multiple runs are performed using <a rel="noreferrer noopener" href="https://github.com/Polymer/tachometer">Tachometer</a>. Tests were performed on a standard desktop machine.</p>
+
+<a name="baseline-passthrough-performance"></a>
+<h3>Baseline Passthrough Performance</h3>
+
+<p>In this case, the goal is verify that loading ES Module Shims polyfill for the ~70% of users with import maps support will not cause any unnecessary slowdowns and match native performance.</p>
+
+<p>To verify this, the benchmark compares using import maps to load <code>n</code> samples of preact + a component render loading and executing them in parallel in Chrome with and without the ES Module Shims script tag on the page</p>
+
+<p>The benchmarks include the full time to load ES Module Shims into the browser and run the feature detections.</p>
+
+<figure>
+<img style="width:55em" alt="ES Module Shims process" src="baseline-passthrough-perf.png" />
+<figcaption>Load time for native import maps in Chrome, with (orange) & without (blue) ES Module Shims on the page, varied over <code>n</code> number of samples loaded</figcaption>
+</figure>
+
+<p>We can see that there is a slight extra load time caused by having ES Module Shims on the page corresponding to roughly 6ms of extra load time, the time for ES Module Shims to initialize and run its feature detections.</p>
+
+<p>For the most part, the performance is identical corresponding to the native passthrough being applied and the polyfill not engaging at all.</p>
+
+<a name="baseline-passthrough-with-throttling"></a>
+<h4>Baseline Passthrough with Throttling</h4>
+
+<p>As we start to throttle the network, the cost of the ES Module Shims bandwidth should then start to show due to its 12KB network download size</p>
+
+<p>Throttling is performed to 750KB/s and 25ms RTT.</p>
+
+<figure>
+<img style="width:55em" alt="ES Module Shims process" src="baseline-passthrough-perf-throttled.png" />
+<figcaption>Throttled network load time for native import maps in Chrome, with (orange) & without (blue) ES Module Shims on the page, varied over <code>n</code> number of samples loaded</figcaption>
+</figure>
+
+<p>Throttling introduces some jitter so the results are a little more random, but on average around 15ms extra loading time can be seen, where the expected load time for 12KB of JS on a 750KB/s network would be around 15ms (bearing in mind everything is in parallel so execution time fills in the network gaps).</p>
+
+<p>We can therefore conclude that for the ~70% of users with import maps support, the polyfill effect on performance is mostly negligible, corresponding only to the 12KB download and some initialization time of less than 10ms.</p>
+
+<a name="polyfill-performance"></a>
+<h3>Polyfill Performance</h3>
+
+<p>To test the cost when the ES Module Shims polyfill fully engages, we can't turn off native modules support in Chrome, but instead we can use the assumption that: <em>The cost of loading a module graph with and without a small import map in use should be roughly similar.</em>
+
+<p>Firstly, to verify this assumption in Chrome native we can load two version of the same sample cases - one using import maps, and one importing the exact URLs without import maps, both running natively in Chrome:</p>
+
+<figure>
+<img style="width:55em" alt="ES Module Shims process" src="chrome-assumption.png" />
+<figcaption>Assumption verification: Chrome load time is roughly similar for loading with native import maps (orange) and native modules without import maps (blue) - neither without ES Module Shims, varied over <code>n</code> number of samples loaded</figcaption>
+</figure>
+
+<p>Weirdly import maps seem marginally faster, but for the most part the assumption seems to hold.</p>
+
+<p>Next, in order to compare native loading performance to the polyfill we can use Firefox to ensure the polyfill engages, comparing the case with import maps and bare specifiers, which would engage the polyfill as import maps are currently unsupported in Firefox, against importing direct URLs which are natively supported (and without ES Module Shims at all in the page).</p>
+
+<figure>
+<img style="width:55em" alt="ES Module Shims process" src="polyfill-perf.png" />
+<figcaption>Load time for Firefox native modules without import maps and ES Module Shims (blue), versus with import maps and ES Module Shims and the polyfill engaging (orange), varied over <code>n</code> number of samples loaded</figcaption>
+</figure>
+
+<p>The cost of the ES Module Shims polyfill layer in comparison to native shows a clear linear slwodown since all code is being executed through the ES Module Shims loader in the import maps case.</p>
+
+<p><em>The linear correllation shows a polyfill cost of a 1.43x slowdown on average against native loading</em>. Where 1MB of 100 modules loaded and executed in 200ms natively, it takes 275ms with the ES Module Shims polyfill (including all extra polyfill loading and initialization time).</p>
+
+<a name="polyfill-with-throttling"></a>
+<h4>Polyfill with Throttling</h4>
+
+<p>Again, checking the results on network throttled to 750KB/s and 5ms RTT:
+
+<figure>
+<img style="width:55em" alt="ES Module Shims process" src="polyfill-perf-throttled.png" />
+<figcaption>Throttled network load time for Firefox native modules without import maps and ES Module Shims (blue), versus with import maps and ES Module Shims and the polyfill engaging (orange), varied over <code>n</code> number of samples loaded</figcaption>
+</figure>
+
+<p><em>From the data, the above gives an average of around a 1.67x slowdown.</em> Where 1MB of 100 modules loaded in 230ms natively, it takes 390ms with the polyfill throttled. The slightly larger difference with throttling may be due to the native browser preloader or network having less close integration with the module system (and this is why we always recommend using <code>&lt;link rel="modulepreload" /></code>, which was not used in these tests).</p>
+
+<a name="import-maps-performance"></a>
+<h3>Import Maps Performance</h3>
+
+<p>The question is if very large import maps (say 100s of lines) will slow down the page load since they lie on the critical load path.</p>
+
+<p>To investigate this, we replace the previous simple two line import mapping, with a new import map that generates an import map line per sample case. So <code>n = 10</code> would correspond to 20 distinct import map mappings that must be used going up to 200 lines for <code>n = 100</code>.</p>
+
+<p>We use the throttled connection of 750KB/s and 25ms RTT since this is primarily a network question not a CPU one.</p>
+
+<figure>
+<img style="width:55em" alt="ES Module Shims process" src="chrome-import-maps-perf.png" />
+<figcaption>Throttled network load time for Chrome native modules with an import map with only two entries (blue), versus individual pairs of import map entries per <code>n</code> sample (orange), varied over <code>n</code> number of samples loaded</figcaption>
+</figure>
+
+<p>There seems to be some type of bottlenecking that kicks in as the samples initially grow, it's not clear if this is an outlier or if it indicates a real change, but it clearly shows no significant slowdown. At most there might be some minor sub 100ms cost in play.</p>
+
+<a name="polyfill-import-maps-performance"></a>
+<h4>Polyfill Import Maps Performance</h4>
+
+<p>Finally to apply the same comparison as previously, but for Firefox and ES Module Shims, we would expect roughly the same dynamics without any surprises. Comparing an import map with two entries against one with two import map entries per sample <code>n</code> both loaded with the ES Module Shims polyfill:</p>
+
+<figure>
+<img style="width:55em" alt="ES Module Shims process" src="esms-polyfill-maps-perf.png" />
+<figcaption>Throttled network load time for Firefox and ES Module Shims import map polyfill comparing an import map with only two entries (blue), versus individual pairs of import map entries per <code>n</code> sample (orange), varied over <code>n</code> number of samples loaded</figcaption>
+</figure>
+
+<p>The initial outlier from the previous case doesn't seem to show up anymore, perhaps since this is all running through the polyfill (will be interesting to compare when Firefox soon ships import maps).
+  
+<p>The cost of loading a 200 line import map adds about 7.5ms in Chrome native and around 15ms for Firefox with the ES Module Shims polyfill to the load time - large import maps seem to be mostly pretty low cost.</p>
+
+<a name="project-future"></a>
+<h2>Project Future</h2>
+
+<p>ES Module Shims will continue to track new modules features on the horizon, and its baseline support target for the polyfill will naturally shift over time.
+
+<ul>
+<li>CSS Modules and JSON Modules are current new naive modules features that move the polyfill support baseline <a rel="noopener noreferrer" href="https://github.com/guybedford/es-module-shims#pollyfill-enable-option">via an opt-in</a> since they form static polyfill failures just like import maps.</p>
+
+<li>Supporting top-level await is tricky but should be possible with some <a rel="noreferrer noopener" href="https://github.com/guybedford/es-module-shims/issues/5">lexer additions</a> when the time comes to ensure wide support.
+
+<li>Polyfilling module workers is unfortunately not possible in Firefox as dynamic <code class="lang-javascript">import()</code> was never implemented for script workers (which is required per the first section to implement the loader). I believe that feature may be landing soon if it hasn't already so we would then have a baseline that can inject loader hooks into module workers to possibly even polyfill features like <a rel="noopener noreferrer" href="https://github.com/tc39/proposal-js-module-blocks">module blocks</a> on top of that in a couple of years.</p>
+
+<li>Adding support for <a rel="noreferrer noopener" href="https://github.com/WebAssembly/esm-integration">Wasm modules</a> will be a primary aim for the project as well, possibly even combining with Wasm-related polyfills.
+
+<li><a rel="noreferrer noopener" href="https://github.com/tc39/proposal-asset-references">Asset references</a> would be fun to try polyfill as well.
+</ul>
+
+<p>As a rule for the project, only stable native features will be implemented when they're being implemented in browsers. Polyfill mode risks diverging from native otherwise.</p>
+
+<p>Thanks for making it this far, you have no excuses not to use import maps now! (and benefit from <a rel="noopener noreferrer" href="https://jspm.org/import-map-cdn#the-javascript-module-caching-tradeoff">superior granular caching</a>)</p>
+        </div>
+      </div>
+
+    <div class="push"></div>
+  </div>
+  <div class="footer">
+    <div class="blocks"><div class="align">
+      <div class="block"><div class="content">
+        <h2>About</h2>
+        <p>I'm an independent software developer, TC39 delegate and core open source contributor to Node.js, RollupJS and others. Currently working on <a href="http://jspm.org/">JSPM.org</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Work</h2>
+        <p>I'm available for consulting work. <a href="https://github.com/sponsors/jspm">Sponsorships</a> of my projects is always welcome, and feel free to get in touch.
+      </div></div><div class="block"><div class="content">
+        <h2>Contact</h2>
+        <p>Contact me via email ([first][last]@gmail.com), on <a href="https://twitter.com/guybedford">Twitter</a>, <a href="https://github.com/guybedford">GitHub</a> or <a href="http://za.linkedin.com/in/guybedford">LinkedIn</a>.
+    </div></div>
+  </div>
+  <script>
+    Array.prototype.forEach.call(document.querySelectorAll('code.javascript, code.lang-javascript, code.html, code.lang-html'), function(code) {
+      code.innerHTML = code.innerHTML
+      .replace(/(\/\/[. ]*)$/gm, '<span class=comment>$1</span>')
+      .replace(/&lt;!--/g, '<span class=comment>&lt;!--')
+      .replace(/--&gt;/g, '--></span>')
+      .replace(/('[^']*')/gm, '<span class=string>$1</span>')
+      .replace(/("[^"]*")/gm, '<span class=string>$1</span>')
+      .replace(/([^#\d\-a-z\:])(-?\d+)/gm, '$1<span class=number>$2</span>')
+      .replace(/([^\.\-\/"']|^)(for|function|new|await|async|throw|return|var|let|const|if|else|true|as|false|this|import|export class|export|from|while)([^-a-zA-Z=]|$)/gm, '$1<span class=keyword>$2</span>$3');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('a'), function(a) {
+      if ((a.getAttribute('href') || '#').substr(0, 1) != '#' && !a.getAttribute('target'))
+        a.setAttribute('target', '_blank');
+    });
+  </script>
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-16744385-1']);
+    _gaq.push(['_trackPageview']);
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+</body>
+</html>

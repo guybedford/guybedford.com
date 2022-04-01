@@ -5,6 +5,14 @@
   "feed_url": "https://guybedford.com/feed.json",
   "items": [
     {
+      "id": "10",
+      "url": "https://guybedford.com/production-import-maps-es-module-shims",
+      "title": "How ES Module Shims became a Production Import Maps Polyfill",
+      "content_html": "<p>An overview of the architecture, polyfill details and performance of ES Module Shims.</p>",
+      "date_published": "2022-04-01T07:00:00.000Z",
+      "date_modified": "2022-04-01T07:00:00.000Z"
+    },
+    {
       "id": "9",
       "url": "https://guybedford.com/es-module-preloading-integrity",
       "title": "ES Module Preloading and Integrity",
