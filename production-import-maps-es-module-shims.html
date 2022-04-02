@@ -24,7 +24,7 @@
           <div class="meta">
             <span class="author">Guy Bedford</span>
             &sdot;
-            <span class="date">1 April 2022</span>
+            <span class="date">4 April 2022</span>
           </div>
           <div class="clear"></div>
         </div>
@@ -284,7 +284,7 @@ console.log(dep);
 <figcaption>Load time for native import maps in Chrome, with (orange) & without (blue) ES Module Shims on the page, varied over <code>n</code> number of samples loaded</figcaption>
 </figure>
 
-<p>We can see that there is a slight extra load time caused by having ES Module Shims on the page corresponding to roughly 6ms of extra load time, the time for ES Module Shims to initialize and run its feature detections.</p>
+<p>We can see that there is a slight extra load time caused by having ES Module Shims on the page corresponding to an average of 6.5ms of extra load time, the time for ES Module Shims to initialize and run its feature detections.</p>
 
 <p>For the most part, the performance is identical corresponding to the native passthrough being applied and the polyfill not engaging at all.</p>
 
@@ -300,25 +300,16 @@ console.log(dep);
 <figcaption>Throttled network load time for native import maps in Chrome, with (orange) & without (blue) ES Module Shims on the page, varied over <code>n</code> number of samples loaded</figcaption>
 </figure>
 
-<p>Throttling introduces some jitter so the results are a little more random, but on average around 15ms extra loading time can be seen, where the expected load time for 12KB of JS on a 750KB/s network would be around 15ms (bearing in mind everything is in parallel so execution time fills in the network gaps).</p>
+<p>Throttling introduces some noise, but on average there is around 10ms extra loading time, where the expected load time for 12KB of JS on a 750KB/s network would be around 15ms (bearing in mind everything is in parallel so execution time fills in the network gaps).</p>
 
-<p>We can therefore conclude that for the ~70% of users with import maps support, the polyfill effect on performance is mostly negligible, corresponding only to the 12KB download and some initialization time of less than 10ms.</p>
+<p>We can therefore conclude that for the ~70% of users with import maps support, the polyfill effect on performance is mostly negligible, corresponding only to the 12KB download and some initialization time of usually never more than around 15ms.</p>
 
 <a name="polyfill-performance"></a>
 <h3>Polyfill Performance</h3>
 
 <p>To test the cost when the ES Module Shims polyfill fully engages, we can't turn off native modules support in Chrome, but instead we can use the assumption that: <em>The cost of loading a module graph with and without a small import map in use should be roughly similar.</em>
 
-<p>Firstly, to verify this assumption in Chrome native we can load two version of the same sample cases - one using import maps, and one importing the exact URLs without import maps, both running natively in Chrome:</p>
-
-<figure>
-<img style="width:55em" alt="ES Module Shims process" src="chrome-assumption.png" />
-<figcaption>Assumption verification: Chrome load time is roughly similar for loading with native import maps (orange) and native modules without import maps (blue) - neither without ES Module Shims, varied over <code>n</code> number of samples loaded</figcaption>
-</figure>
-
-<p>Weirdly import maps seem marginally faster, but for the most part the assumption seems to hold.</p>
-
-<p>Next, in order to compare native loading performance to the polyfill we can use Firefox to ensure the polyfill engages, comparing the case with import maps and bare specifiers, which would engage the polyfill as import maps are currently unsupported in Firefox, against importing direct URLs which are natively supported (and without ES Module Shims at all in the page).</p>
+<p>Using this assumption in order to compare native loading performance to the polyfill we can use Firefox to ensure the polyfill engages, comparing the case with import maps and bare specifiers, which would engage the polyfill as import maps are currently unsupported in Firefox, against importing direct URLs which are natively supported (and without ES Module Shims at all in the page).</p>
 
 <figure>
 <img style="width:55em" alt="ES Module Shims process" src="polyfill-perf.png" />
@@ -327,7 +318,7 @@ console.log(dep);
 
 <p>The cost of the ES Module Shims polyfill layer in comparison to native shows a clear linear slwodown since all code is being executed through the ES Module Shims loader in the import maps case.</p>
 
-<p><em>The linear correllation shows a polyfill cost of a 1.43x slowdown on average against native loading</em>. Where 1MB of 100 modules loaded and executed in 200ms natively, it takes 275ms with the ES Module Shims polyfill (including all extra polyfill loading and initialization time).</p>
+<p><em>The linear correllation shows a polyfill cost of a 1.59x slowdown on average against native loading</em>. Where 1MB of 100 modules loaded and executed in 220ms natively, it takes 320ms with the ES Module Shims polyfill (including all extra polyfill loading and initialization time).</p>
 
 <a name="polyfill-with-throttling"></a>
 <h4>Polyfill with Throttling</h4>
@@ -339,12 +330,12 @@ console.log(dep);
 <figcaption>Throttled network load time for Firefox native modules without import maps and ES Module Shims (blue), versus with import maps and ES Module Shims and the polyfill engaging (orange), varied over <code>n</code> number of samples loaded</figcaption>
 </figure>
 
-<p><em>From the data, the above gives an average of around a 1.67x slowdown.</em> Where 1MB of 100 modules loaded in 230ms natively, it takes 390ms with the polyfill throttled. The slightly larger difference with throttling may be due to the native browser preloader or network having less close integration with the module system (and this is why we always recommend using <code>&lt;link rel="modulepreload" /></code>, which was not used in these tests).</p>
+<p><em>From the data, the above gives an average of around a 1.14x slowdown under a throttled connection.</em> Where 1MB of 100 modules loaded in 692ms natively, it took 744ms with the polyfill throttled. The overhead of the polyfill reduces with throttling since the network becomes the bottleneck, not the polyfill.</p>
 
 <a name="import-maps-performance"></a>
 <h3>Import Maps Performance</h3>
 
-<p>The question is if very large import maps (say 100s of lines) will slow down the page load since they lie on the critical load path.</p>
+<p>The last question is if very large import maps (say 100s of lines) will slow down the page load since they lie on the critical load path.</p>
 
 <p>To investigate this, we replace the previous simple two line import mapping, with a new import map that generates an import map line per sample case. So <code>n = 10</code> would correspond to 20 distinct import map mappings that must be used going up to 200 lines for <code>n = 100</code>.</p>
 
@@ -355,7 +346,7 @@ console.log(dep);
 <figcaption>Throttled network load time for Chrome native modules with an import map with only two entries (blue), versus individual pairs of import map entries per <code>n</code> sample (orange), varied over <code>n</code> number of samples loaded</figcaption>
 </figure>
 
-<p>There seems to be some type of bottlenecking that kicks in as the samples initially grow, it's not clear if this is an outlier or if it indicates a real change, but it clearly shows no significant slowdown. At most there might be some minor sub 100ms cost in play.</p>
+<p>The slowdown is very minor, at just under 10ms for the <code>n = 100</code> case, corresponding to the minor additional download time of the larger map, demonstrating larger import maps have a negligible performance cost.</p>
 
 <a name="polyfill-import-maps-performance"></a>
 <h4>Polyfill Import Maps Performance</h4>
@@ -367,9 +358,9 @@ console.log(dep);
 <figcaption>Throttled network load time for Firefox and ES Module Shims import map polyfill comparing an import map with only two entries (blue), versus individual pairs of import map entries per <code>n</code> sample (orange), varied over <code>n</code> number of samples loaded</figcaption>
 </figure>
 
-<p>The initial outlier from the previous case doesn't seem to show up anymore, perhaps since this is all running through the polyfill (will be interesting to compare when Firefox soon ships import maps).
+<p>The bump at <code>n = 30</code> is likely an artifact of the throttling process itself.
   
-<p>The cost of loading a 200 line import map adds about 7.5ms in Chrome native and around 15ms for Firefox with the ES Module Shims polyfill to the load time - large import maps seem to be mostly pretty low cost.</p>
+<p>The cost of loading a 200 line import map adds about 7.5ms in Chrome native and around 10ms for Firefox with the ES Module Shims polyfill to the page load time as expected on the throttled connection bandwidth - larger import maps are mostly low cost and with this cost as expected.</p>
 
 <a name="project-future"></a>
 <h2>Project Future</h2>
