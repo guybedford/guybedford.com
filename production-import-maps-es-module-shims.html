@@ -134,11 +134,11 @@ while (items.length) /regexp/.test(items.pop()) || error();
 
 <p>The trick then is to create a minimal lexer context stack that matches opening and closing braces or parens with just enough state information to handle the major ambiguity cases like the above.
 
-<p>Determining if the parser is in an expression position for a dynamic <code>import()</code> (which otherwise could also be ambiguous with class method definition) can be handled in a similar way with a minimal lexer context associated with the brace and paren stack.
+<p>Determining if the parser is in an expression position for a dynamic <code>import()</code> (which otherwise could also be ambiguously with a class method definition) can be handled in a similar way with a minimal lexer context associated with the brace and paren stack.
 
 <p>Initially implemented as an embedded JS-based lexer in ES Module Shims, the implementation was later converted into C and compiled with WebAssembly (C compiles to one of the smallest Wasm outputs) for even further performance benefits (mostly cold start benefits actually, V8 isn't free!) and became the <a rel="noopener noreferrer" href="http://npmjs.com/package/es-module-lexer">es-module-lexer</a> project.
   
-<p>To give an idea of the performance, the whole project is a <a rel="noopener noreferrer" href="https://unpkg.com/es-module-lexer@0.10.0/dist/lexer.js">4.5KB JS file</a> that can analyze 1MB of JS code in under 10ms on most desktops with the performance roughly scaling linearly. It's become a popular npm package with over 7.5 million downloads a week. There's a lot of value to be found in sharing a good solution to a common problem.
+<p>To give an idea of the performance, the whole project is a <a rel="noopener noreferrer" href="https://unpkg.com/es-module-lexer@0.10.5/dist/lexer.js">4.5KB JS file</a> that can analyze 1MB of JS code in under 10ms on most desktops with the performance roughly scaling linearly. It's become a popular npm package with over 7.5 million downloads a week. There's a lot of value to be found in sharing a good solution to a common problem.
 
 <a name="source-cusomization-via-blob-urls"></a>
 <h3>2. Source customization via <code>Blob</code> URLs</h3>
@@ -185,7 +185,7 @@ export default ...
 
 <img style="width:55em;margin-left:-2.5em;" alt="ES Module Shims process" src="esms-process.svg" />
 
-<p>The final <code class="lang-javascript">import('blob:site.com/72ac72b2-8106')</code> then fully captures the entire graph execution of <code>app.js</code>, making ES Module Shims a comprehensive <a rel="noopener noreferrer" href="https://github.com/guybedford/es-module-shims#resolve-hook">customizable</a> loader on top of baseline native modules in browsers (barring some minor fudging of <a rel="noopener noreferrer" href="https://github.com/guybedford/es-module-shims#implementation-details">live bindings in cycles</a>).
+<p>The final <code class="lang-javascript">import('blob:site.com/72ac72b2-8106')</code> then fully captures the entire graph execution of <code>app.js</code>, making ES Module Shims a comprehensive <a rel="noopener noreferrer" href="https://github.com/guybedford/es-module-shims#resolve-hook">customizable</a> loader on top of baseline native modules in browsers fully supporting live bindings and cycles (barring some minor fudging of <a rel="noopener noreferrer" href="https://github.com/guybedford/es-module-shims#implementation-details">live bindings <em>in</em> cycles</a>).
 
 <a name="shim-mode"></a>
 <h3>Shim Mode</h3>
@@ -217,7 +217,7 @@ console.log(dep);
 
 <div style="text-align: center"><img style="height: 3em;" alt="ES Module Shims process" src="bare-specifier-error.png" /></div>
 
-<p>Since this is a static error (happening at link time, not a dynamic error at execution time), no modules will be executed at all. As a result, it is possible for ES Module Shims to executing the module itself through its own loader only when it fails native execution, and there would be no risk of duplicate execution. Depending on the browser, the fetch cache can be shared as well.
+<p>Since this is a static error (happening at link time, not a dynamic error at execution time), no modules will be executed at all. As a result, it is possible for ES Module Shims to execute the module graph itself through its own loader only when it fails native execution, and there would be no risk of duplicate execution. Depending on the browser, the fetch cache can be shared as well.
 
 <p>The polyfill pattern in ES Module Shims then becomes one of re-executing static failures. As long you are statically using the features that you want polyfilled, in a way that would always result in a static error in unsupported browsers, ES Module Shims will detect that and run the modules through its loader to polyfill.
 
@@ -229,7 +229,7 @@ console.log(dep);
   <li>Run feature detections for import maps and related modules features.
   <li>If the browser supports all the modern features, nothing further needs to be done.
   <li>Analyze the module sources through the loader fetch and lexer tracing, and determine if any of them use unsupported native features that would statically throw.
-  <li>If the module has been determined to have statically thrown based on the source analysis, go ahead and execute the module graph in the ES Module Shims loader.
+  <li>If the module graph has been determined to have statically thrown based on the source analysis, go ahead and execute the module graph in the ES Module Shims loader.
 </ol>
 
 <p><a rel="noreferrer noopener" href="https://caniuse.com/import-maps">69% of users</a> hit the fast path where the browser already supports import maps, where ES Module Shims basically does zero work apart from feature detections.</p>
@@ -239,7 +239,7 @@ console.log(dep);
 <p>The simplest workflow then is just to use an import map from the start:</p>
 
 <pre><code class="lang-html">
-&lt;script async src="https://ga.jspm.io/npm:es-module-shims@1.5.2/dist/es-module-shims.js">&lt;/script>
+&lt;script async src="https://ga.jspm.io/npm:es-module-shims@1.5.4/dist/es-module-shims.js">&lt;/script>
 &lt;script type="importmap">
 {
   "imports": {
@@ -374,7 +374,7 @@ console.log(dep);
 
 <li>Supporting top-level await is tricky but should be possible with some <a rel="noreferrer noopener" href="https://github.com/guybedford/es-module-shims/issues/5">lexer additions</a> when the time comes to ensure wide support.
 
-<li>Polyfilling module workers is unfortunately not possible in Firefox as dynamic <code class="lang-javascript">import()</code> was never implemented for script workers (which is required per the first section to implement the loader). I believe that feature may be landing soon if it hasn't already so we would then have a baseline that can inject loader hooks into module workers to possibly even polyfill features like <a rel="noopener noreferrer" href="https://github.com/tc39/proposal-js-module-blocks">module blocks</a> on top of that in a couple of years.</p>
+<li>Polyfilling module workers is unfortunately not possible in Firefox since dynamic <code class="lang-javascript">import()</code> was never implemented for script workers (which is required per the first section to implement the loader). I believe that feature may be landing soon if it hasn't already so we would then have a polyfill path to inject loader hooks into module workers to possibly even polyfill features like <a rel="noopener noreferrer" href="https://github.com/tc39/proposal-js-module-blocks">module blocks</a> on top of that as well.</p>
 
 <li>Adding support for <a rel="noreferrer noopener" href="https://github.com/WebAssembly/esm-integration">Wasm modules</a> will be a primary aim for the project as well, possibly even combining with Wasm-related polyfills.
 
