@@ -30,10 +30,12 @@
         </div>
         <div class="article-body">
 <p><a rel="noreferrer noopener" href="https//github.com/guybedford/es-module-shims">ES Module Shims</a> started out as a way to use new native modules features on the web (like <a rel="noopener noreferrer" href="https://github.com/wicg/import-maps">import maps</a>) before they were released in browsers, in a way that could be suitable for fast development or simple production workflows.
-  
-<p>Over time it has turned into a highly optimized production-suitable drop-in polyfill for import maps.
 
-<p>It's an interesting project architecturally so I wanted to first share some background on how the <a href="#loader-architecture">project architecture</a> works, how the <a href="#polyfill-mode">polyfill mode</a> works, and then dig into the details of its <a href="#performance">performance</a> and what might be on the <a href="#project-future">future</a> horizon for the project.
+<p>Over time it has turned into a highly optimized production-suitable drop-in polyfill for import maps.
+  
+<p>With import maps now supported by <a rel="noopener noreferrer" href="https://caniuse.com/import-maps">70% of users</a> and Firefox <a rel="noopener noreferrer" href="https://groups.google.com/a/mozilla.org/g/dev-platform/c/tiReRwpIT30/m/yrKfGBjFCAAJ">just announcing today</a> it will be shipping work on import maps it's a good time to share the details of <a rel="noreferrer noopener" href="https://github.com/guybedford/es-module-shims">ES Module Shims</a> and its approach more widely.</p>
+
+<p>This post shares the details of the <a href="#loader-architecture">project architecture</a> works, how the <a href="#polyfill-mode">polyfill mode</a> works, and then digs into the details of its <a href="#performance">performance</a> and what might be on the <a href="#project-future">future</a> horizon for the project.
 
 <p><em>Thank you to <a rel="noopener noreferrer" href="https://basecamp.com/">Basecamp</a> for seeing the potential of the project and sponsoring new performance investigation work on ES Module Shims, and to Rich Harris for the original inspiration for the project.</em></p>
 
@@ -316,7 +318,7 @@ console.log(dep);
 <figcaption>Load time for Firefox native modules without import maps and ES Module Shims (blue), versus with import maps and ES Module Shims and the polyfill engaging (orange), varied over <code>n</code> number of samples loaded</figcaption>
 </figure>
 
-<p>The cost of the ES Module Shims polyfill layer in comparison to native shows a clear linear slwodown since all code is being executed through the ES Module Shims loader in the import maps case.</p>
+<p>The cost of the ES Module Shims polyfill layer in comparison to native shows a clear linear slowdown since all code is being executed through the ES Module Shims loader in the import maps case.</p>
 
 <p><em>The linear correllation shows a polyfill cost of a 1.59x slowdown on average against native loading</em>. Where 1MB of 100 modules loaded and executed in 220ms natively, it takes 320ms with the ES Module Shims polyfill (including all extra polyfill loading and initialization time).</p>
 
@@ -381,7 +383,7 @@ console.log(dep);
 
 <p>As a rule for the project, only stable native features will be implemented when they're being implemented in browsers. Polyfill mode risks diverging from native otherwise.</p>
 
-<p>Thanks for making it this far, you have no excuses not to use import maps now! (and benefit from <a rel="noopener noreferrer" href="https://jspm.org/import-map-cdn#the-javascript-module-caching-tradeoff">superior granular caching</a>.)</p>
+<p>Thanks for making it this far, you have no excuses not to <a rel="noreferrer noopener" href="https://github.com/guybedford/es-module-shims#usage">use import maps</a> now! (and benefit from <a rel="noopener noreferrer" href="https://jspm.org/import-map-cdn#the-javascript-module-caching-tradeoff">superior granular caching</a>.)</p>
         </div>
       </div>
 
