@@ -25,7 +25,7 @@ strong {
   min-height: 100%;
   height: auto !important;
   height: 100%;
-  margin: 0 auto -200px;
+  margin: 0 auto -150px;
 }
 figcaption {
   text-align: center;
@@ -187,16 +187,12 @@ code .keyword {
 .push {
   height: 250px;
 }
-.homepage .footer {
-  position:fixed;
-  bottom:0
-}
 .footer {
   width: 100%;
   background-color: #eee;
   padding: 1em 0 2em 0;
   border-top: 1px solid #ddd;
-  height: 200px;
+  height: 150px;
 }
 .footer .blocks {
   margin-left: 50%;
@@ -212,6 +208,9 @@ code .keyword {
   display: inline-block;
   vertical-align: top;
 }
+.footer .block2 {
+  width: 66.66%;
+}
 .footer .block .content {
   padding: 1.5em;
 }
@@ -220,6 +219,9 @@ code .keyword {
   border-bottom: 1px dotted #aaa;
   padding-bottom: 0.2em;
   margin-bottom: 0.6em;
+}
+.footer .block2 h2 {
+  width: 33.33%;
 }
 .footer .block p {
   font-size: 0.8em;
