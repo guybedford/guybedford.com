@@ -5,6 +5,14 @@
   "feed_url": "https://guybedford.com/feed.json",
   "items": [
     {
+      "id": "11",
+      "url": "https://guybedford.com/es-module-shims-2.0",
+      "title": "Announcing ES Module Shims 2.0",
+      "content_html": "<p>ES Module Shims 2.0 release post, featuring TypeScript type stripping, Wasm modules, source phase imports and multiple import maps support.</p>",
+      "date_published": "2025-01-26T07:00:00.000Z",
+      "date_modified": "2025-01-26T07:00:00.000Z"
+    },
+    {
       "id": "10",
       "url": "https://guybedford.com/es-module-shims-production-import-maps",
       "title": "How ES Module Shims became a Production Import Maps Polyfill",
