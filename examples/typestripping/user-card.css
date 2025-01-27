@@ -1,0 +1,17 @@
+.user-card {
+  padding: 1.2rem;
+  border-radius: 16px;
+  margin: 1rem;
+  font: 500 18px system-ui;
+  width: 300px;
+  background: linear-gradient(135deg, #eee 0%, #fafafa 100%);
+  box-shadow: 2px 5px 7px rgba(100,100,255,0.2);
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+.user-card:hover {
+ transform: translateY(-2px);
+}
+.age { 
+  color: #726497;
+}

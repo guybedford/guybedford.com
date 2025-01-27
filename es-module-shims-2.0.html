@@ -1,0 +1,186 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>Announcing ES Module Shims 2.0</title>
+  <meta name="description" content="Announcing ES Module Shims 2.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="alternate" title="Guy Bedford's Blog" type="application/json" href="https://guybedford.com/feed.json" />
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+      <div class="article">
+        <a class="back" href="/" target="_self">&laquo;</a>
+        <div class="article-header">
+          <h1 class="title">Announcing ES Module Shims 2.0</h1>
+          <div class="meta">
+            <span class="author">Guy Bedford</span>
+            &sdot;
+            <span class="date">26 January 2025</span>
+          </div>
+          <div class="clear"></div>
+        </div>
+        <div class="article-body">
+          <p><a href="https://github.com/guybedford/es-module-shims">ES Module Shims 2.0</a> is now live, a comprehensive 13KB polyfill for import maps, multiple import maps, CSS & JSON imports, Wasm modules and Source Phase imports.</p>
+          <p>If you don't know what all of these features are, they are covered below, but first and most importantly I want to highlight one of the major new features in 2.0: <em>TypeScript type stripping support</em>.</p>
+          <h3>TypeScript Type Stripping Support</h3>
+          <p><em>Why compile TypeScript in the browser?</em> The background here is that ES Module Shims is a <a href="https://www.npmjs.com/package/es-module-shims#benchmarks">very</a> <a href="https://www.npmjs.com/package/es-module-lexer#benchmarks">fast</a> <a href="/es-module-shims-production-import-maps.html">modules polyfill</a> aiming to polyfill all new modules features in browsers on top of baseline modules support. So the TC39 Type Annotations proposal exactly falls under the polyfill definition of this project. Furthermore using the same well-defined variant of TypeScript from Node.js's Amaro project in the browser providing direct per-source rewriting called type stripping or <a href="https://www.totaltypescript.com/erasable-syntax-only">erasable syntax</a> we actually do get a very fast workflow out of it.</em>
+          <p>It completes the <em>"nobuild"</em> workflow - TypeScript being the last piece providing a streamlined approach to web development without build tools, Node.js or npm.</p>
+
+          <p>To show a practical example, here's a Vue component written in TypeScript:</p>
+          
+          <strong>user-card.ts</strong>
+<pre><code>
+<span class="keyword">import</span> { defineComponent } <span class="keyword">from</span> <span class="string">'vue'</span>;
+<span class="keyword">import</span> style <span class="keyword">from</span> <span class="string">'./user-card.css'</span> with { type: <span class="string">'css'</span> };
+
+document.adoptedStyleSheets.push(style);
+
+<span class="keyword">export interface</span> User {
+  name: string;
+  age: number;
+}
+
+<span class="keyword">export default</span> defineComponent({
+  props: {
+    user: { 
+      type: Object <span class="keyword">as</span> () => User,
+      required: <span class="keyword">true</span>
+    }
+  },
+  template: <span class="string">`&lt;div class="user-card">{{ user.name }} &lt;span class="age">({{ user.age }})&lt;/span>&lt;/div>`</span>
+});
+</code></pre>
+
+          <p>In the above, we are not only using TypeScript, but also the newly supported <em>CSS Module Scripts</em> feature to modularly load the component's CSS:</p>
+
+          <strong>user-card.css</strong>
+<pre><code>
+<span class="keyword">.user-card</span> {
+  padding: <span class="number">1.2rem</span>;
+  border-radius: <span class="number">16px</span>;
+  margin: <span class="number">1rem</span>;
+  font: 500 <span class="number">18px</span> system-ui;
+  width: <span class="number">300px</span>;
+  background: linear-gradient(<span class="number">135deg</span>, <span class="string">#eee</span> <span class="number">0%</span>, <span class="string">#fafafa</span> <span class="number">100%</span>);
+  box-shadow: <span class="number">2px</span> <span class="number">5px</span> <span class="number">7px</span> <span class="string">rgba(100,100,255,0.2)</span>;
+  transition: transform <span class="number">0.2s</span> ease;
+  cursor: pointer;
+}
+<span class="keyword">.user-card:hover</span> {
+  transform: translateY(<span class="number">-2px</span>);
+}
+<span class="keyword">.age</span> { 
+  color: <span class="string">#726497</span>;
+}
+</code></pre>
+
+          <p>Now, using ES Module Shims, we can use just a single HTML file with static files to run this app polyfilling CSS Module Scripts and the TypeScript support without needing any build process or any other steps at all:</p>
+
+          <strong>index.html</strong>
+<pre><code>
+&lt;!doctype html>
+
+<span class="comment">&lt;!-- Load ES Module Shims from your CDN of choice --></span>
+&lt;<span class="keyword">script</span> async src=<span class="string">"https://ga.jspm.io/npm:es-module-shims@2.0.9/dist/es-module-shims.js"</span>>&lt;/<span class="keyword">script</span>>
+
+<span class="comment">&lt;!-- Enable the TypeScript and CSS Import features (only import maps are polyfilled by default) --></span>
+&lt;<span class="keyword">script</span> type=<span class="string">"esms-options"</span>>
+  { <span class="string">"polyfillEnable"</span>: [<span class="string">"typescript"</span>, <span class="string">"css-modules"</span>] }
+&lt;/<span class="keyword">script</span>>
+
+<span class="comment">&lt;!-- Set dependencies in import map --></span>
+&lt;<span class="keyword">script</span> type=<span class="string">"importmap"</span>>
+  {
+    <span class="string">"imports"</span>: {
+      <span class="string">"vue"</span>: <span class="string">"https://ga.jspm.io/npm:vue@3.5.13/dist/vue.esm-browser.prod.js"</span>
+    }
+  }
+&lt;/<span class="keyword">script</span>>
+
+&lt;div id="app">
+  &lt;<span class="keyword">user-card</span> v-for=<span class="string">"user in users"</span> :key=<span class="string">"user.name"</span> :user=<span class="string">"user"</span> /&gt;
+&lt;/div>
+ 
+<span class="comment">&lt;!-- ES Module Shims will find this and handle the rest --></span>
+<span class="keyword">&lt;script</span> type=<span class="string">"module"</span> lang=<span class="string">"ts"</span><span class="keyword">&gt;</span>
+  <span class="keyword">import</span> { createApp } <span class="keyword">from</span> <span class="string">'vue'</span>;
+  <span class="keyword">import</span> UserCard, { <span class="keyword">type</span> User } <span class="keyword">from</span> <span class="string">'./user-card.ts'</span>;
+ 
+  createApp({
+    setup() {
+      <span class="keyword">const</span> users: User[] = [
+        { name: <span class="string">'Alice'</span>, age: <span class="number">25</span> },
+        { name: <span class="string">'Bob'</span>, age: <span class="number">30</span> }
+      ];
+      <span class="keyword">return</span> { users };
+    }
+  }).component(<span class="string">'user-card'</span>, UserCard).mount(<span class="string">'#app'</span>);
+<span class="keyword">&lt;/script&gt;</span>
+</code></pre>
+          <p><a href="/examples/typestripping/">See the full example in action here</a>.</p>
+          <h3>Multiple Import Map Support</h3>
+          <p>Anyone who's worked with import maps for a while will know about the dreaded <em>"An import map is added after module script load was triggered."</em> error. Thanks to the hard work of Yoav Weiss we now have support for multiple import maps coming in the latest version of Chrome.</p>
+          <p>ES Module Shims 2.0 includes a polyfill for this feature, detecting when multiple import maps are being used and then checking if modules rely on mappings from the new import map that weren't present in the old one per the standard <a href="https://github.com/guybedford/es-module-shims?tab=readme-ov-file#polyfill-explainer">polyfill failure semantics</a>. Effectively we can polyfill multiple import maps on top of singular import maps support, now sharing the native module loader and registry wherever possible, just like we polyfill import maps itself on top of non-import maps modules support in old browsers.</p>
+          <p>In addition, using mutation observers on the body and head tags we can also detect when an import map is dynamically injected to then apply the same polyfilling for dynamic loading workflows (provided new dynamic imports go through the global `importShim()` polyfill handler).
+          <h3>Wasm Modules & Source Phase Imports</h3>
+          <p>Typically, WebAssembly is loaded using a pattern like <code>fetch('./module.wasm').then(WebAssembly.compileStreaming).then(...)</code> to get a handle to the <code>WebAssembly.Module</code> object for initialization.</p>
+          <p>In these workflows, getting the URL to the Wasm binary isn't always trivial as there can be redirections in play. In additions build tools can have a hard time working well with this code requiring runtime configurations of the binary path in many cases as well.</p>
+          <p>With the source phase imports standard we can now directly import Wasm binaries in a portable way, and this is fully supported in ES Module Shims when enabling the feature:</p>
+<pre><code>
+&lt;!doctype html>
+
+&lt;<span class="keyword">script</span> async src=<span class="string">"https://ga.jspm.io/npm:es-module-shims@2.0.9/dist/es-module-shims.js"</span>>&lt;/<span class="keyword">script</span>>
+
+<span class="comment">&lt;!-- Enable the WebAssembly and Source Phase features --></span>
+&lt;<span class="keyword">script</span> type=<span class="string">"esms-options"</span>>
+  { <span class="string">"polyfillEnable"</span>: [<span class="string">"wasm-modules"</span>, <span class="string">"source-phase"</span>] }
+&lt;/<span class="keyword">script</span>>
+
+<span class="keyword">&lt;script</span> type=<span class="string">"module"</span><span class="keyword">&gt;</span>
+  <span class="keyword">import source</span> mod <span class="keyword">from</span> <span class="string">'./module.wasm'</span>;
+  <span class="keyword">const </span>{ fn } = <span class="keyword">await</span> WebAssembly.instantiate(mod, ...options...);
+<span class="keyword">&lt;/script</span>&gt;</span>
+</code></pre>
+          <p>Finally, if you're still curious about how ES Module Shims works, I wrote a previous post about <a href="/es-module-shims-production-import-maps">how ES Module Shims became a production import maps polyfill</a>.</p>
+        </div>
+      </div>
+
+    <div class="push"></div>
+  </div>
+  <div class="footer">
+    <div class="blocks"><div class="align">
+      <div class="block block2"><div class="content">
+        <h2>About</h2>
+        <p>I'm a software developer at Fastly, TC39 delegate and core open source contributor to Node.js, RollupJS and others.<br/>OSS Projects: <a href="https://jspm.org/">JSPM</a>, <a href="https://github.com/systemjs/systemjs">SystemJS</a>, <a href="https://github.com/guybedford/es-module-shims">ES Module Shims</a>, <a href="https://chompbuild.com">Chomp</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Contact</h2>
+        <p>Connect - <a href="https://bsky.app/profile/guybedford.com">Bluesky</a> | <a href="https://twitter.com/guybedford">Twitter</a> | <a rel="me" href="https://fosstodon.org/@guybedford">Mastodon</a> | <a href="https://discord.gg/dNRweUu">JSPM Discord</a> | <a href="https://github.com/guybedford">GitHub</a> | <a href="http://za.linkedin.com/in/guybedford">LinkedIn</a><br />Email - <em>[first][last]@gmail.com</em>.
+    </div></div>
+  </div>
+  <script>
+    Array.prototype.forEach.call(document.querySelectorAll('code.javascript, code.lang-javascript, code.html, code.lang-html'), function(code) {
+      code.innerHTML = code.innerHTML
+        .replace(/\/\/(.*)/gm, '<span class="comment">//$1</span>')
+        .replace(/('[^']*')/gm, '<span class="string">$1</span>')
+        .replace(/([^#\d])(\d+)/gm, '$1<span class="number">$2</span>')
+        .replace(/([^\.])(for|function|new|throw|return|var|if|else|true|false|this|import|export class|export|from)\b/gm, '$1<span class="keyword">$2</span>');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('a'), function(a) {
+      if ((a.getAttribute('href') || '#').substr(0, 1) != '#' && !a.getAttribute('target'))
+        a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noreferrer noopener');
+    });
+  </script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-GE76WNG25S"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-GE76WNG25S');
+  </script>
+</body>
+</html>
