@@ -24,7 +24,7 @@
           <div class="meta">
             <span class="author">Guy Bedford</span>
             &sdot;
-            <span class="date">27 January 2025</span>
+            <span class="date">27 January 2025 (updated 17 February 2025)</span>
           </div>
           <div class="clear"></div>
         </div>
@@ -147,7 +147,7 @@ document.adoptedStyleSheets.push(style);
 
 <span class="keyword">&lt;script</span> type=<span class="string">"module"</span><span class="keyword">&gt;</span>
   <span class="keyword">import source</span> mod <span class="keyword">from</span> <span class="string">'./module.wasm'</span>;
-  <span class="keyword">const </span>{ fn } = <span class="keyword">await</span> WebAssembly.instantiate(mod, ...options...);
+  <span class="keyword">const </span>{ fn } = <span class="keyword">new</span> WebAssembly.Instance(mod, ...options...);
 <span class="keyword">&lt;/script</span>&gt;</span>
 </code></pre>
           <p>Finally, if you're still curious about how ES Module Shims works, I wrote a previous post about <a href="/es-module-shims-production-import-maps">how ES Module Shims became a production import maps polyfill</a>.</p>
