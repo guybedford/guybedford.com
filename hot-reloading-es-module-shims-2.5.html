@@ -195,8 +195,10 @@ module.exports = <span class="keyword">function</span> bar() {
           of the performance benefits, and the polyfill the breaking cases to ensure that those native modules still work in older browsers
           that don't support the syntax (even if they don't get real lazy loading).</p>
           <p>When the feature reaches above 50% support, we'll likely re-examine including this feature in the baseline then to allow shipping
-          production applications using import defer syntax. ES Module Shims is growing to be more than just an import maps
-          polyfill, but an opportunity to continue follow the module features polyfill baseline. See the <a href="/es-module-shims-2.0">2.0 release</a> post for more details on the full 2.0 feature set.</p>
+          production applications using import defer syntax.
+          
+          <h2>Supporting Native Modules Workflows</h2>
+          <p>ES Module Shims is growing to be more than just an import maps polyfill, but an opportunity to continue follow the module features polyfill baseline, allowing wider use of modern native modules features. See the <a href="/es-module-shims-2.0">2.0 release</a> post for more details on the full 2.0 feature set.</p>
         </div>
       </div>
 
