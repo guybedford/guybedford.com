@@ -1,0 +1,238 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <title>Hot Reloading with ES Module Shims 2.5</title>
+  <meta name="description" content="Hot Reloading with ES Module Shims 2.5">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="ES Module Shims 2.5 Release Update">
+  <meta name="twitter:description" content="ES Module Shims 2.5 release update, including hot reloading, import defer and new baseline feature support.">
+  <meta name="twitter:site" content="@guybedford">
+
+  <link rel="alternate" title="Guy Bedford's Blog" type="application/json" href="https://guybedford.com/feed.json" />
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+
+      <div class="article">
+        <a class="back" href="/" target="_self">&laquo;</a>
+        <div class="article-header">
+          <h1 class="title">Hot Reloading with ES Module Shims 2.5</h1>
+          <div class="meta">
+            <span class="author">Guy Bedford</span>
+            &sdot;
+            <span class="date">12 May 2025</span>
+          </div>
+          <div class="clear"></div>
+        </div>
+        <div class="article-body">
+          <p>ES Module Shims brings some new ES Module Shims features together along with <em>hot reloading on a standards-compatible browser workflow</em>.
+          The CSS, JSON and TypeScript module import features from 2.0 are now automatically enabled by default without needing separate configurations, and we also have a brand new <em>Import Defer</em> polyfill for the upcoming TC39 proposal being implemented.</p>
+          <h2>Raising the Baseline</h2>
+          <p>One of the major features of ES Module Shims is to try and not do anything at all in modern browsers.
+          We achieve this by defining baseline feature support and then feature detecting these baseline features. When all baseline features are supported, we don't need to do any further analysis of the modules on the page as we know the browser supports the features we are targetting.</p>
+          <p>ES Module Shims has now added <em>CSS Modules</em> and <em>JSON Modules</em> to its baseline support. These features have 75% and 85% browser adoption respectively, making them finally ready for baseline inclusion.</p>
+          <p>I've been writing more web applications using native CSS Module imports and it's actually a really great modular CSS dev experience being able to include styles from module scripts:</p>
+<pre><code>
+<span class="keyword">import</span> style <span class="keyword">from</span> <span class="string">'./style.css'</span> with { type: <span class="string">'css'</span> };
+document.adoptedStyleSheets.push(style);
+
+<span class="comment">// ...component code...</span>
+</code></pre>
+
+          <h3>Zero Configuration TypeScript</h3>
+          <p>In ES Module Shims 2.5, TypeScript is now enabled automatically, so that no configuration is required to load native TypeScript apps in the browser for simple development workflows.</p>
+          <p>While not formally a baseline feature, since importing TypeScript will always break (not due to syntax, but due to MIME type), we can support TypeScript just like a baseline feature.
+          In order to avoid fetching modules to analyze them, TypeScript is hinted with the <code><span class="keyword">lang=<span class="string">"ts"</span></code> attribute on the top-level module script.
+          When TypeScript is found, the Amaro type stripping build of SWC will be loaded dynamically. We now also output a console warning that TypeScript is being type stripped
+          in the browser to help avoid any mistakes where this gets into production code.</p>
+          
+          <h2>Hot Reloading</h2>
+          <p><strong>Comprehensive hot reloading</strong> is now supported in both Shim Mode and Polyfill Mode when enabled, allowing modules to be selectively reloaded without reloading the entire page:</p>
+
+<pre><code>
+&lt;<span class="keyword">script</span> type=<span class="string">"esms-options"</span>>
+{
+  <span class="string">"hotReload"</span>: true
+}
+&lt;/<span class="keyword">script</span>>
+</code></pre>
+
+          <p>When enabled, modules will be loaded with the <code><span class="keyword">import</span>.<span class="keyword">meta</span>.hot</code> object available exactly following <a href="https://vite.dev/guide/api-hmr" target="_blank">Vite's hot reloading API</a>.</p>
+
+          <p>To initiate a reload of a module, call the <code><span class="keyword">importShim</span>.hotReload(url)</code> API. Calling it many times will batch updates together to an interval set by the hotReloadInterval configuration option.</p>
+          <p>When hot reloading requires a module to be reinstanced, ES Module Shims will append a `?v=2` query parameter suffix to the fetch request and module registry import. Short of a little module graph work, it really is that simple.</p>
+
+          <p><em>Reload-based hot reloading is automatically enabled <strong>for all module types</strong>: CSS module imports, JSON module imports and TypeScript.</em></p>
+
+          <p>Here's a full end to end example application from the 2.0 release post running with zero configuration with hot reloading:</p>
+
+          <div style="text-align: center"><iframe src="https://share.descript.com/embed/e3RJoRpGMFd" width="640" height="360" frameborder="0" allowfullscreen></iframe></div>
+          <p>&nbsp;</p>
+
+          <strong>index.html</strong>
+<pre><code>
+&lt;!doctype html>
+
+<span class="comment">&lt;!-- Load ES Module Shims from your CDN of choice --></span>
+&lt;<span class="keyword">script</span> async src=<span class="string">"https://ga.jspm.io/npm:es-module-shims@2.5.0/dist/es-module-shims.js"</span>>&lt;/<span class="keyword">script</span>>
+
+<span class="comment">&lt;!-- Enable hot reloading --></span>
+&lt;<span class="keyword">script</span> type=<span class="string">"esms-options"</span>>{ <span class="string">"hotReload"</span>: true }&lt;/<span class="keyword">script</span>>
+
+<span class="comment">&lt;!-- Set dependencies in import map --></span>
+&lt;<span class="keyword">script</span> type=<span class="string">"importmap"</span>>
+  {
+    <span class="string">"imports"</span>: {
+      <span class="string">"vue"</span>: <span class="string">"https://ga.jspm.io/npm:vue@3.5.13/dist/vue.esm-browser.prod.js"</span>
+    }
+  }
+&lt;/<span class="keyword">script</span>>
+ 
+<span class="comment">&lt;!-- ES Module Shims will find this and handle the rest --></span>
+<span class="keyword">&lt;script</span> type=<span class="string">"module"</span> lang=<span class="string">"ts"</span> src=<span class="string">"app.ts"</span><span class="keyword">&gt;</span><span class="keyword">&lt;/script&gt;</span>
+
+&lt;div id="app">&lt;/div>
+</code></pre>
+          <p>App can be defined to support hot reloading using standard Vue techniques:</p>
+
+<pre><code>
+<span class="keyword">import</span> { createApp } <span class="keyword">from</span> <span class="string">'vue'</span>;
+<span class="keyword">import</span> UserCard, { type User } <span class="keyword">from</span> <span class="string">'./user-card.ts'</span>;
+
+let app;
+<span class="keyword">export</span> <span class="keyword">function</span> initApp () {
+  app = createApp({
+    setup() {
+      <span class="keyword">const</span> users: User[] = [
+        { name: <span class="string">'Alice'</span>, age: 35 },
+        { name:<span class="string">'Bob'</span>, age: 30 }
+      ];
+      <span class="keyword">return</span> { users };
+    },
+    template: <span class="string">`&lt;user-card v-for="user in users" :key="user.name" :user="user" />`</span>
+  });
+  app.component(<span class="string">'user-card'</span>, UserCard);
+  <span class="keyword">return</span> app;
+}
+
+if (!<span class="keyword">import.meta</span>.hot?.data?.loaded) {
+  app = initApp();
+  app.mount(<span class="string">'#app'</span>);
+}
+
+if (<span class="keyword">import.meta</span>.hot) {
+  <span class="keyword">import.meta</span>.hot.data.loaded = true;
+  <span class="keyword">import.meta</span>.hot.accept((newApp) => {
+    app.unmount();
+    app = newApp.initApp();
+    app.mount(<span class="string">'#app'</span>);
+  });
+}
+</code></pre>
+          <p>Any event source can then be attached to drive change requests via calls like <code>importShim.hotReload(<span class="string">'./app.ts'</span>)</code> or <code>importShim.hotReload(<span class="string">'./user-card.css'</span>)</code>.</p>
+          <p><a href="/examples/hot-reloading/">The full example is available here</a>.</p>
+
+          <h2>Import Defer</h2>
+
+          <p>If you're not aware of the <a href="https://github.com/tc39/proposal-defer-import-eval" target="_blank">Import Defer</a> proposal, it fills a needed gap from what CommonJS modules provide, namely <em>lazy</em> module initialization.
+          It's a common pattern in Node.js applications to move <code>require()</code> statements into functions when wanting to reduce startup time:</p>
+
+          <em>CommonJS without Lazy Initialization</em>
+<pre><code>
+const foo = require(<span class="string">'foo'</span>);
+
+module.exports = <span class="keyword">function</span> bar() {
+  <span class="keyword">return</span> foo();
+}
+</code></pre>
+          <br />
+          <em>CommonJS with Lazy Initialization</em>
+<pre><code>
+module.exports = <span class="keyword">function</span> bar() {
+  const foo = require(<span class="string">'foo'</span>);
+  <span class="keyword">return</span> foo();
+}
+</code></pre>
+
+          <p>With the change in CommonJS, if you never use the function <code>bar()</code>, then you never have to pay the loading cost for importing
+          <code>foo()</code>. But when it comes to ES Modules, we don't have a synchronous import (well, <a href="https://github.com/tc39/proposal-import-sync" target="_blank">not yet</a>)
+          so we can't do the same thing:</p>
+          <pre><code>
+<span class="keyword">import</span> foo <span class="keyword">from</span> <span class="string">'foo'</span>;
+
+<span class="keyword">export default function</span> bar() {
+  <span class="keyword">return</span> foo();
+}
+          </code></pre>
+          <p>With import defer we have the ability to do something similar for ES Modules:</p>
+<pre><code>
+<span class="keyword">import defer</span> * as fooDeferred <span class="keyword">from</span> <span class="string">'foo'</span>;
+
+<span class="keyword">export default function</span> bar() {
+  <span class="keyword">return</span> fooDeferred.foo();
+}
+</code></pre>
+          <p>In the above, the module namespace <code>fooDeferred</code> is a new Deferred Module Namespace, which represents a top-level <em>link</em> (fetching and resolving all dependencies) of the imported graph, but
+            without the usual top-level evaluation step. Object access on the deferred namespace (<code>fooDeferred.foo</code>) is what causes the lazy top-level
+            execution, which can then be encapsulated synchronously inside of the <code>bar()</code> function, provided there is no top-level await,
+            achieving a similar initialization savings.</p>
+          <h3>Import Defer Polyfill</h3>
+          <p>ES Module Shims now fully supports stripping defer syntax, although this is not part of the baseline yet so must be enabled via:</p>
+<pre><code>
+&lt;<span class="keyword">script</span> type=<span class="string">"esms-options"</span>>
+{
+  <span class="string">"polyfillEnable"</span>: [<span class="string">"import-defer"</span>]
+}
+&lt;/<span class="keyword">script</span>>
+</code></pre>
+          <p>There's a viable polyfill path here though, made possible since as a syntax feature it will statically break
+          module loads in browsers that don't support it. This exactly fits the defininition of the ES Module Shims polyfill semantics, in
+          that we only polyfill modules that statically break in the native loader, so that native applications can take advantage
+          of the performance benefits, and the polyfill the breaking cases to ensure that those native modules still work in older browsers
+          that don't support the syntax (even if they don't get real lazy loading).</p>
+          <p>When the feature reaches above 50% support, we'll likely re-examine including this feature in the baseline then to allow shipping
+          production applications using import defer syntax. ES Module Shims is growing to be more than just an import maps
+          polyfill, but an opportunity to continue follow the module features polyfill baseline. See the <a href="/es-module-shims-2.0">2.0 release</a> post for more details on the full 2.0 feature set.</p>
+        </div>
+      </div>
+
+    <div class="push"></div>
+  </div>
+  <div class="footer">
+    <div class="blocks"><div class="align">
+      <div class="block block2"><div class="content">
+        <h2>About</h2>
+        <p>I'm a software developer, TC39 delegate and core open source contributor to Node.js, RollupJS and others.<br/>OSS Projects: <a href="https://jspm.org/">JSPM</a>, <a href="https://github.com/systemjs/systemjs">SystemJS</a>, <a href="https://github.com/guybedford/es-module-shims">ES Module Shims</a>, <a href="https://chompbuild.com">Chomp</a>.
+      </div></div><div class="block"><div class="content">
+        <h2>Contact</h2>
+        <p>Connect - <a href="https://bsky.app/profile/guybedford.com">Bluesky</a> | <a href="https://twitter.com/guybedford">Twitter</a> | <a rel="me" href="https://fosstodon.org/@guybedford">Mastodon</a> | <a href="https://discord.gg/dNRweUu">JSPM Discord</a> | <a href="https://github.com/guybedford">GitHub</a> | <a href="http://za.linkedin.com/in/guybedford">LinkedIn</a><br />Email - <em>[first][last]@gmail.com</em>.
+    </div></div>
+  </div>
+  <script>
+    Array.prototype.forEach.call(document.querySelectorAll('code.javascript, code.lang-javascript, code.html, code.lang-html'), function(code) {
+      code.innerHTML = code.innerHTML
+        .replace(/\/\/(.*)/gm, '<span class="comment">//$1</span>')
+        .replace(/('[^']*')/gm, '<span class="string">$1</span>')
+        .replace(/([^#\d])(\d+)/gm, '$1<span class="number">$2</span>')
+        .replace(/([^\.])(for|function|new|throw|return|var|if|else|true|false|this|import|export class|export|from)\b/gm, '$1<span class="keyword">$2</span>');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('a'), function(a) {
+      if ((a.getAttribute('href') || '#').substr(0, 1) != '#' && !a.getAttribute('target'))
+        a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noreferrer noopener');
+    });
+  </script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-GE76WNG25S"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-GE76WNG25S');
+  </script>
+</body>
+</html>

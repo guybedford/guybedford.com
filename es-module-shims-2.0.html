@@ -24,7 +24,7 @@
           <div class="meta">
             <span class="author">Guy Bedford</span>
             &sdot;
-            <span class="date">27 January 2025 (updated 17 February 2025)</span>
+            <span class="date">27 January 2025 (updated 12 May 2025)</span>
           </div>
           <div class="clear"></div>
         </div>
@@ -90,12 +90,7 @@ document.adoptedStyleSheets.push(style);
 &lt;!doctype html>
 
 <span class="comment">&lt;!-- Load ES Module Shims from your CDN of choice --></span>
-&lt;<span class="keyword">script</span> async src=<span class="string">"https://ga.jspm.io/npm:es-module-shims@2.0.9/dist/es-module-shims.js"</span>>&lt;/<span class="keyword">script</span>>
-
-<span class="comment">&lt;!-- Enable the TypeScript and CSS Import features (only import maps are polyfilled by default) --></span>
-&lt;<span class="keyword">script</span> type=<span class="string">"esms-options"</span>>
-  { <span class="string">"polyfillEnable"</span>: [<span class="string">"typescript"</span>, <span class="string">"css-modules"</span>] }
-&lt;/<span class="keyword">script</span>>
+&lt;<span class="keyword">script</span> async src=<span class="string">"https://ga.jspm.io/npm:es-module-shims@2.5.0/dist/es-module-shims.js"</span>>&lt;/<span class="keyword">script</span>>
 
 <span class="comment">&lt;!-- Set dependencies in import map --></span>
 &lt;<span class="keyword">script</span> type=<span class="string">"importmap"</span>>
@@ -138,11 +133,11 @@ document.adoptedStyleSheets.push(style);
 <pre><code>
 &lt;!doctype html>
 
-&lt;<span class="keyword">script</span> async src=<span class="string">"https://ga.jspm.io/npm:es-module-shims@2.0.9/dist/es-module-shims.js"</span>>&lt;/<span class="keyword">script</span>>
+&lt;<span class="keyword">script</span> async src=<span class="string">"https://ga.jspm.io/npm:es-module-shims@2.5.0/dist/es-module-shims.js"</span>>&lt;/<span class="keyword">script</span>>
 
 <span class="comment">&lt;!-- Enable the WebAssembly and Source Phase features --></span>
 &lt;<span class="keyword">script</span> type=<span class="string">"esms-options"</span>>
-  { <span class="string">"polyfillEnable"</span>: [<span class="string">"wasm-modules"</span>, <span class="string">"source-phase"</span>] }
+  { <span class="string">"polyfillEnable"</span>: [<span class="string">"wasm-modules"</span>] }
 &lt;/<span class="keyword">script</span>>
 
 <span class="keyword">&lt;script</span> type=<span class="string">"module"</span><span class="keyword">&gt;</span>

@@ -1,12 +1,7 @@
 <!doctype html>
 
 <!-- Load ES Module Shims from your CDN of choice -->
-<script async src="https://ga.jspm.io/npm:es-module-shims@2.0.9/dist/es-module-shims.js"></script>
-
-<!-- Enable the TypeScript and CSS Import features (only import maps are polyfilled by default) -->
-<script type="esms-options">
-  { "polyfillEnable": ["typescript", "css-modules"] }
-</script>
+<script async src="https://ga.jspm.io/npm:es-module-shims@2.5.0/dist/es-module-shims.js"></script>
 
 <!-- Set dependencies in import map -->
 <script type="importmap">
@@ -17,10 +12,6 @@
   }
 </script>
 
-<div id="app">
-  <user-card v-for="user in users" :key="user.name" :user="user" />
-</div>
- 
 <!-- ES Module Shims will find this and handle the rest -->
 <script type="module" lang="ts">
   import { createApp } from 'vue';
@@ -36,3 +27,9 @@
     }
   }).component('user-card', UserCard).mount('#app');
 </script>
+
+<body>
+<div id="app">
+  <user-card v-for="user in users" :key="user.name" :user="user" />
+</div>
+</body>
